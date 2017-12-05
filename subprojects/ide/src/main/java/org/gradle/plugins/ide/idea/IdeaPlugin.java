@@ -280,6 +280,18 @@ public class IdeaPlugin extends IdePlugin {
                 return Sets.newLinkedHashSet();
             }
         });
+        conventionMapping.map("resourceDirs", new Callable<Set<File>>() {
+            @Override
+            public Set<File> call() throws Exception {
+                return Sets.newLinkedHashSet();
+            }
+        });
+        conventionMapping.map("testResourceDirs", new Callable<Set<File>>() {
+            @Override
+            public Set<File> call() throws Exception {
+                return Sets.newLinkedHashSet();
+            }
+        });
         conventionMapping.map("excludeDirs", new Callable<Set<File>>() {
             @Override
             public Set<File> call() {
