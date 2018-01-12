@@ -44,7 +44,11 @@ public class VersionSelectionReasons {
         return new DefaultComponentSelectionReason(ROOT);
     }
 
-    public static ComponentSelectionReasonInternal of(List<ComponentSelectionDescriptor> descriptions) {
+    public static ComponentSelectionReasonInternal of(List<? extends ComponentSelectionDescriptor> descriptions) {
+        return new DefaultComponentSelectionReason(descriptions);
+    }
+
+    public static ComponentSelectionReasonInternal of(ComponentSelectionDescriptor descriptions) {
         return new DefaultComponentSelectionReason(descriptions);
     }
 
@@ -58,7 +62,7 @@ public class VersionSelectionReasons {
             descriptions.add((ComponentSelectionDescriptorInternal) description);
         }
 
-        public DefaultComponentSelectionReason(List<ComponentSelectionDescriptor> descriptions) {
+        public DefaultComponentSelectionReason(List<? extends ComponentSelectionDescriptor> descriptions) {
             this.descriptions = Sets.newLinkedHashSet();
             for (ComponentSelectionDescriptor description : descriptions) {
                 this.descriptions.add((ComponentSelectionDescriptorInternal) description);
