@@ -39,7 +39,7 @@ class GradleInvocationSpec implements InvocationSpec {
         this.gradleDistribution = gradleDistribution
         this.workingDirectory = workingDirectory
         this.tasksToRun = tasksToRun
-        this.args = args
+        this.args = new ArrayList<>(args)
         this.jvmOpts = jvmOpts
         this.cleanTasks = cleanTasks
         this.useDaemon = useDaemon

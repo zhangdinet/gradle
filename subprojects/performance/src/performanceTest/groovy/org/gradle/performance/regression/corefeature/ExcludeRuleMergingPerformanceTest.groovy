@@ -18,6 +18,11 @@ package org.gradle.performance.regression.corefeature
 
 import org.gradle.performance.AbstractCrossVersionPerformanceTest
 import org.gradle.performance.WithExternalRepository
+import org.gradle.performance.fixture.BuildExperimentInvocationInfo
+import org.gradle.performance.fixture.BuildExperimentListener
+import org.gradle.performance.fixture.BuildExperimentSpec
+import org.gradle.performance.fixture.GradleInvocationSpec
+import org.gradle.performance.measure.MeasuredOperation
 
 class ExcludeRuleMergingPerformanceTest extends AbstractCrossVersionPerformanceTest implements WithExternalRepository {
 
@@ -36,6 +41,25 @@ class ExcludeRuleMergingPerformanceTest extends AbstractCrossVersionPerformanceT
         runner.gradleOpts = ["-Xms256m", "-Xmx256m"]
         runner.targetVersions = ["4.6-20180125002142+0000"]
         runner.args = ['-PuseHttp', "-PhttpPort=${serverPort}"]
+        runner.addBuildExperimentListener(new BuildExperimentListener() {
+            @Override
+            void beforeExperiment(BuildExperimentSpec experimentSpec, File projectDir) {
+                GradleInvocationSpec invocation = experimentSpec.invocation as GradleInvocationSpec
+                if (invocation.gradleDistribution.version.version != '4.6-20180125002142+0000') {
+                    invocation.args << '-Dorg.gradle.advancedpomsupport=true'
+                }
+            }
+
+            @Override
+            void beforeInvocation(BuildExperimentInvocationInfo invocationInfo) {
+
+            }
+
+            @Override
+            void afterInvocation(BuildExperimentInvocationInfo invocationInfo, MeasuredOperation operation, BuildExperimentListener.MeasurementCallback measurementCallback) {
+
+            }
+        })
 
         when:
         def result = runner.run()
