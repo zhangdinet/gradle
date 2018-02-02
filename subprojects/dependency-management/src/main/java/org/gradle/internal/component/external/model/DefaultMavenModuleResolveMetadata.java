@@ -182,8 +182,7 @@ public class DefaultMavenModuleResolveMetadata extends AbstractModuleComponentRe
     }
 
     private boolean isJavaLibrary() {
-//        return advancedPomSupportEnabled && (isKnownJarPackaging() || isPomPackaging());
-        return false;
+        return advancedPomSupportEnabled && (isKnownJarPackaging() || isPomPackaging());
     }
 
     @Nullable
