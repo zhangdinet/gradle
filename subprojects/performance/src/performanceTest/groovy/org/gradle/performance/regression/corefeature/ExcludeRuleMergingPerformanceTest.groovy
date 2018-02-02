@@ -89,4 +89,44 @@ class ExcludeRuleMergingPerformanceTest extends AbstractCrossVersionPerformanceT
         cleanup:
         stopServer()
     }
+
+    def "resolve large dependency graph"() {
+        runner.testProject = TEST_PROJECT_NAME
+        startServer()
+
+        given:
+        runner.tasksToRun = ['resolveDependencies']
+        runner.gradleOpts = ["-Xms256m", "-Xmx256m"]
+        runner.targetVersions = ["4.6-20180125002142+0000"]
+        runner.args = ['-PuseHttp', "-PhttpPort=${serverPort}", "-PnoExcludes"]
+        runner.addBuildExperimentListener(new BuildExperimentListener() {
+            @Override
+            void beforeExperiment(BuildExperimentSpec experimentSpec, File projectDir) {
+                GradleInvocationSpec invocation = experimentSpec.invocation as GradleInvocationSpec
+                if (invocation.gradleDistribution.version.version != '4.6-20180125002142+0000') {
+                    invocation.args << '-Dorg.gradle.advancedpomsupport=true'
+                }
+            }
+
+            @Override
+            void beforeInvocation(BuildExperimentInvocationInfo invocationInfo) {
+
+            }
+
+            @Override
+            void afterInvocation(BuildExperimentInvocationInfo invocationInfo, MeasuredOperation operation, BuildExperimentListener.MeasurementCallback measurementCallback) {
+
+            }
+        })
+
+        when:
+        def result = runner.run()
+
+        then:
+        result.assertCurrentVersionHasNotRegressed()
+
+        cleanup:
+        stopServer()
+    }
+
 }
