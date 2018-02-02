@@ -147,11 +147,11 @@ public final class GradlePomModuleDescriptorParser extends AbstractModuleDescrip
 
     private void addDependencies(GradlePomModuleDescriptorBuilder mdBuilder, PomReader pomReader) {
         // Only consider Maven <dependencyManagement> for BOM files
-        if (isBom(pomReader)) {
+//        if (isBom(pomReader)) {
             for (PomDependencyMgt dependencyMgt : pomReader.getDependencyMgt().values()) {
                 mdBuilder.addOptionalDependency(dependencyMgt);
             }
-        }
+//        }
 
         for (PomDependencyData dependency : pomReader.getDependencies().values()) {
             mdBuilder.addDependency(dependency);
