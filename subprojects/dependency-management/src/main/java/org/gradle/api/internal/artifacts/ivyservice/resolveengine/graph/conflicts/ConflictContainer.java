@@ -147,7 +147,7 @@ class ConflictContainer<K, T> {
 
         Set<K> participants = Sets.newLinkedHashSet();
         participants.add(target);
-        
+
         //No conflict with matching participants found, create new
         c = new Conflict(participants, candidates);
         conflicts.add(c);

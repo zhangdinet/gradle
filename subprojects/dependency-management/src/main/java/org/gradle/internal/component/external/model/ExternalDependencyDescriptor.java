@@ -46,17 +46,47 @@ public abstract class ExternalDependencyDescriptor {
 
     protected abstract ExternalDependencyDescriptor withRequested(ModuleComponentSelector newRequested);
 
+//    private static final AtomicInteger calls = new AtomicInteger();
+//    private static final AtomicInteger hits = new AtomicInteger();
+
+    private ImmutableAttributes lastConsumerAttributes;
+    private ComponentIdentifier lastComponentId;
+    private ConfigurationMetadata lastFromConfig;
+    private ComponentResolveMetadata lastTargetComponent;
+    private List<ConfigurationMetadata> cachedResult;
+
     public List<ConfigurationMetadata> getMetadataForConfigurations(ImmutableAttributes consumerAttributes, AttributesSchemaInternal consumerSchema, ComponentIdentifier fromComponent, ConfigurationMetadata fromConfiguration, ComponentResolveMetadata targetComponent) {
+//        int calls = ExternalDependencyDescriptor.calls.incrementAndGet();
+        if (lastConsumerAttributes != null
+            && consumerAttributes.equals(lastConsumerAttributes)
+            && fromComponent.equals(lastComponentId)
+            && fromConfiguration.equals(lastFromConfig)
+            && targetComponent.equals(lastTargetComponent)) {
+//            int i = hits.incrementAndGet();
+//            int rate = 100*i/calls;
+//            System.err.println("Cache hit: " + rate + "%");
+            return cachedResult;
+        }
+        List<ConfigurationMetadata> result = null;
         if (!targetComponent.getVariantsForGraphTraversal().isEmpty()) {
             // This condition shouldn't be here, and attribute matching should always be applied when the target has variants
             // however, the schemas and metadata implementations are not yet set up for this, so skip this unless:
             // - the consumer has asked for something specific (by providing attributes), as the other metadata types are broken for the 'use defaults' case
             // - or the target is a component from a Maven/Ivy repo as we can assume this is well behaved
             if (!consumerAttributes.isEmpty() || targetComponent instanceof ModuleComponentResolveMetadata) {
-                return ImmutableList.of(AttributeConfigurationSelector.selectConfigurationUsingAttributeMatching(consumerAttributes, targetComponent, consumerSchema));
+                result = ImmutableList.of(AttributeConfigurationSelector.selectConfigurationUsingAttributeMatching(consumerAttributes, targetComponent, consumerSchema));
             }
         }
-        return selectLegacyConfigurations(fromComponent, fromConfiguration, targetComponent);
+        if (result == null) {
+            result = selectLegacyConfigurations(fromComponent, fromConfiguration, targetComponent);
+        }
+        lastConsumerAttributes = consumerAttributes;
+        lastComponentId = fromComponent;
+        lastFromConfig = fromConfiguration;
+        lastTargetComponent = targetComponent;
+        cachedResult = result;
+
+        return result;
     }
 
     protected abstract List<ConfigurationMetadata> selectLegacyConfigurations(ComponentIdentifier fromComponent, ConfigurationMetadata fromConfiguration, ComponentResolveMetadata targetComponent);
