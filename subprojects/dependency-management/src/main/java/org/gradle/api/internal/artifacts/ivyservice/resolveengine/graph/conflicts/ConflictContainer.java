@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -30,7 +31,6 @@ import java.util.Set;
 
 import static com.google.common.collect.Lists.newLinkedList;
 import static com.google.common.collect.Maps.newHashMap;
-import static java.util.Collections.singletonList;
 
 /**
  * Generic container for conflicts. It's generic so that hopefully it's easier to comprehend (and test).
@@ -45,8 +45,8 @@ class ConflictContainer<K, T> {
 
     /**
      * Adds new element and returns a conflict instance if given element is conflicted. Element is conflicted when:
-     *  - has more than 1 candidate
-     *  - is in conflict with an existing element (via replacedBy relationship)
+     * - has more than 1 candidate
+     * - is in conflict with an existing element (via replacedBy relationship)
      *
      * @param target an element of some sort
      * @param candidates candidates for given element
@@ -114,7 +114,49 @@ class ConflictContainer<K, T> {
     }
 
     private Conflict registerConflict(K target, K replacedBy) {
-        return registerConflict(singletonList(target), replacedBy);
+        //replacement candidates are the only important candidates
+        Collection<? extends T> candidates = elements.get(replacedBy);
+        assert candidates != null;
+
+        boolean replaced = !target.equals(replacedBy);
+        //We need to ensure that the conflict is orderly injected to the list of conflicts
+        //Brand new conflict goes to the end
+        //If we find any matching conflict we have to hook up with it
+
+        //Find an existing matching conflict
+        Conflict c = conflictsByParticipant.get(target);
+        if (c != null) {
+            //there is already registered conflict with at least one matching participant, hook up to this conflict
+            c.candidates = candidates;
+            c.participants.add(target);
+            if (replaced) {
+                c.participants.add(replacedBy);
+            }
+            return c;
+        }
+        if (replaced) {
+            c = conflictsByParticipant.get(replacedBy);
+            if (c != null) {
+                //there is already registered conflict with at least one matching participant, hook up to this conflict
+                c.candidates = candidates;
+                c.participants.add(target);
+                c.participants.add(replacedBy);
+                return c;
+            }
+        }
+
+        Set<K> participants = Sets.newLinkedHashSet();
+        participants.add(target);
+        
+        //No conflict with matching participants found, create new
+        c = new Conflict(participants, candidates);
+        conflicts.add(c);
+        conflictsByParticipant.put(target, c);
+        if (replaced) {
+            participants.add(replacedBy);
+            conflictsByParticipant.put(replacedBy, c);
+        }
+        return c;
     }
 
     public int getSize() {
