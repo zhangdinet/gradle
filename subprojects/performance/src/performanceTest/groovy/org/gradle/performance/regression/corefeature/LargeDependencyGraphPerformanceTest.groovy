@@ -42,7 +42,7 @@ class LargeDependencyGraphPerformanceTest extends AbstractCrossVersionPerformanc
         runner.gradleOpts = ["-Xms256m", "-Xmx256m"]
         runner.targetVersions = [baseline]
         runner.args = ['-PuseHttp', "-PhttpPort=${serverPort}", "-PnoExcludes"]
-        //runner.addBuildExperimentListener(createArgsTweaker(baseline))
+        runner.addBuildExperimentListener(createArgsTweaker(baseline))
 
         when:
         def result = runner.run()
