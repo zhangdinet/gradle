@@ -16,7 +16,10 @@
 package org.gradle.internal.component.model;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.gradle.api.attributes.Attribute;
+import org.gradle.api.attributes.AttributeContainer;
 import org.gradle.api.attributes.HasAttributes;
 import org.gradle.api.internal.attributes.AttributeContainerInternal;
 import org.gradle.api.internal.attributes.AttributeValue;
@@ -27,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A stateless attribute matcher, which optimizes for the case of only comparing 0 or 1 candidates and delegates to {@link MultipleCandidateMatcher} for all other cases.
@@ -92,12 +97,106 @@ public class ComponentAttributeMatcher {
         }
 
         ImmutableAttributes requestedAttributes = requested.asImmutable();
+        List<CacheEntry> cand = Lists.newArrayListWithCapacity(candidates.size());
+        int i = 0;
+        for (T candidate : candidates) {
+            cand.add(new CacheEntry(i++, candidate.getAttributes()));
+        }
+        CacheKey key = new CacheKey(requestedAttributes, cand);
 
-        List<T> matches = new MultipleCandidateMatcher<T>(schema, candidates, requestedAttributes).getMatches();
+        List<CacheEntry> cached = cache.get(key);
+        if (cached == null) {
+            cached = new MultipleCandidateMatcher<CacheEntry>(schema, cand, requestedAttributes).getMatches();
+            cache.put(key, cached);
+        }
+        List<T> matches = Lists.newArrayListWithCapacity(cached.size());
+        Iterator<? extends T> it = candidates.iterator();
+        i = 0;
+        for (CacheEntry entry : cached) {
+            while (i++ < entry.index) {
+                it.next();
+            }
+            matches.add(it.next());
+        }
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Selected matches {} from candidates {} for {}", matches, candidates, requested);
         }
         return matches;
+    }
+
+    private final Map<CacheKey, List<CacheEntry>> cache = Maps.newHashMap();
+
+    private static class CacheKey {
+        private final ImmutableAttributes requested;
+        private final List<CacheEntry> entries;
+
+        private CacheKey(ImmutableAttributes requested, List<CacheEntry> entries) {
+            this.requested = requested;
+            this.entries = entries;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CacheKey cacheKey = (CacheKey) o;
+
+            if (!requested.equals(cacheKey.requested)) {
+                return false;
+            }
+            return entries.equals(cacheKey.entries);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = requested.hashCode();
+            result = 31 * result + entries.hashCode();
+            return result;
+        }
+    }
+
+    private static class CacheEntry implements HasAttributes {
+        private final int index;
+        private final AttributeContainer attributes;
+
+        private CacheEntry(int index, AttributeContainer attributes) {
+            this.index = index;
+            this.attributes = attributes;
+        }
+
+        @Override
+        public AttributeContainer getAttributes() {
+            return attributes;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CacheEntry that = (CacheEntry) o;
+
+            if (index != that.index) {
+                return false;
+            }
+            return attributes.equals(that.attributes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = index;
+            result = 31 * result + attributes.hashCode();
+            return result;
+        }
     }
 
 }
