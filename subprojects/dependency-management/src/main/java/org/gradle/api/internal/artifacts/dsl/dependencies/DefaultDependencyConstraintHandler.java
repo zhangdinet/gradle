@@ -17,7 +17,9 @@
 package org.gradle.api.internal.artifacts.dsl.dependencies;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.gradle.api.Action;
@@ -35,6 +37,7 @@ import org.gradle.internal.metaobject.MethodMixIn;
 import org.gradle.util.ConfigureUtil;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,6 +112,7 @@ public class DefaultDependencyConstraintHandler implements DependencyConstraintH
     public final static class CapabilitiesHandlerSpike implements CapabilitiesHandler {
         private final ComponentModuleMetadataHandler metadataHandler;
         private final Map<String, CapabilitySpike> capabilities = Maps.newHashMap();
+        private final Multimap<String, String> moduleToCapability = ArrayListMultimap.create();
 
         public CapabilitiesHandlerSpike(ComponentModuleMetadataHandler metadataHandler) {
             this.metadataHandler = metadataHandler;
@@ -122,6 +126,19 @@ public class DefaultDependencyConstraintHandler implements DependencyConstraintH
                 capabilities.put(identifier, capability);
             }
             configureAction.execute(capability);
+        }
+
+        public Map<String, Set<String>> conflictingModules(String module) {
+            Collection<String> ids = moduleToCapability.get(module);
+            Map<String, Set<String>> result = Maps.newHashMap();
+            for (String capability : ids) {
+                CapabilitySpike capabilitySpike = capabilities.get(capability);
+                if (capabilitySpike.prefer == null) {
+                    // there's no solution registered for this capability
+                    result.put(capability, capabilitySpike.providedBy);
+                }
+            }
+            return result;
         }
 
         public void convertToReplacementRules() {
@@ -143,25 +160,28 @@ public class DefaultDependencyConstraintHandler implements DependencyConstraintH
                 }
             }
         }
+
+        private final class CapabilitySpike implements CapabilityHandler {
+            private final String id;
+            private final Set<String> providedBy = Sets.newHashSet();
+            private String prefer;
+
+            private CapabilitySpike(String id) {
+                this.id = id;
+            }
+
+            @Override
+            public void providedBy(String moduleIdentifier) {
+                moduleToCapability.put(moduleIdentifier, id);
+                providedBy.add(moduleIdentifier);
+            }
+
+            @Override
+            public void prefer(String moduleIdentifer) {
+                prefer = moduleIdentifer;
+            }
+        }
+
     }
 
-    private final static class CapabilitySpike implements CapabilityHandler {
-        private final String id;
-        private final Set<String> providedBy = Sets.newHashSet();
-        private String prefer;
-
-        private CapabilitySpike(String id) {
-            this.id = id;
-        }
-
-        @Override
-        public void providedBy(String moduleIdentifier) {
-            providedBy.add(moduleIdentifier);
-        }
-
-        @Override
-        public void prefer(String moduleIdentifer) {
-            prefer = moduleIdentifer;
-        }
-    }
 }
