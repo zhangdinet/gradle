@@ -19,6 +19,7 @@ package org.gradle.api.internal.artifacts.ivyservice;
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.UnresolvedDependency;
+import org.gradle.api.artifacts.dsl.CapabilitiesHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.internal.artifacts.ArtifactDependencyResolver;
@@ -29,6 +30,7 @@ import org.gradle.api.internal.artifacts.ImmutableModuleIdentifierFactory;
 import org.gradle.api.internal.artifacts.ResolverResults;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
 import org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal;
+import org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyConstraintHandler;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.BuildDependenciesOnlyVisitedArtifactSet;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.DefaultResolvedArtifactsBuilder;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.artifact.DependencyArtifactsVisitor;
@@ -86,6 +88,7 @@ public class DefaultConfigurationResolver implements ConfigurationResolver {
     private final ArtifactTypeRegistry artifactTypeRegistry;
     private final ComponentSelectorConverter componentSelectorConverter;
     private final AttributeContainerSerializer attributeContainerSerializer;
+    private final CapabilitiesHandler capabilitiesHandler;
 
     public DefaultConfigurationResolver(ArtifactDependencyResolver resolver, RepositoryHandler repositories,
                                         GlobalDependencyResolutionRules metadataHandler,
@@ -97,7 +100,8 @@ public class DefaultConfigurationResolver implements ConfigurationResolver {
                                         BuildOperationExecutor buildOperationExecutor,
                                         ArtifactTypeRegistry artifactTypeRegistry,
                                         ComponentSelectorConverter componentSelectorConverter,
-                                        AttributeContainerSerializer attributeContainerSerializer) {
+                                        AttributeContainerSerializer attributeContainerSerializer,
+                                        CapabilitiesHandler capabilitiesHandler) {
         this.resolver = resolver;
         this.repositories = repositories;
         this.metadataHandler = metadataHandler;
@@ -110,6 +114,7 @@ public class DefaultConfigurationResolver implements ConfigurationResolver {
         this.artifactTypeRegistry = artifactTypeRegistry;
         this.componentSelectorConverter = componentSelectorConverter;
         this.attributeContainerSerializer = attributeContainerSerializer;
+        this.capabilitiesHandler = capabilitiesHandler;
     }
 
     @Override
@@ -122,7 +127,7 @@ public class DefaultConfigurationResolver implements ConfigurationResolver {
     }
 
     public void resolveGraph(ConfigurationInternal configuration, ResolverResults results) {
-        List<ResolutionAwareRepository> resolutionAwareRepositories = CollectionUtils.collect(repositories, Transformers.cast(ResolutionAwareRepository.class));
+        final List<ResolutionAwareRepository> resolutionAwareRepositories = CollectionUtils.collect(repositories, Transformers.cast(ResolutionAwareRepository.class));
         StoreSet stores = storeFactory.createStoreSet();
 
         BinaryStore oldModelStore = stores.nextBinaryStore();
@@ -142,6 +147,8 @@ public class DefaultConfigurationResolver implements ConfigurationResolver {
         ResolutionFailureCollector failureCollector = new ResolutionFailureCollector(componentSelectorConverter);
         DependencyGraphVisitor graphVisitor = new CompositeDependencyGraphVisitor(newModelBuilder, localComponentsVisitor, failureCollector);
         DependencyArtifactsVisitor artifactsVisitor = new CompositeDependencyArtifactsVisitor(oldModelVisitor, fileDependencyVisitor, artifactsBuilder);
+
+        ((DefaultDependencyConstraintHandler.CapabilitiesHandlerSpike)capabilitiesHandler).convertToReplacementRules();
 
         resolver.resolve(configuration, resolutionAwareRepositories, metadataHandler, Specs.<DependencyMetadata>satisfyAll(), graphVisitor, artifactsVisitor, attributesSchema, artifactTypeRegistry);
 

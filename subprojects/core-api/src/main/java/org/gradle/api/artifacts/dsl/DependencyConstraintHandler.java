@@ -58,4 +58,6 @@ public interface DependencyConstraintHandler {
      * @param configureAction The closure to use to configure the dependency.
      */
     DependencyConstraint create(Object dependencyConstraintNotation, Action<? super DependencyConstraint> configureAction);
+
+    void capabilities(Action<? super CapabilitiesHandler> configureAction);
 }

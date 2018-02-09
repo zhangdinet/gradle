@@ -18,6 +18,7 @@ package org.gradle.api.internal.artifacts;
 import org.gradle.StartParameter;
 import org.gradle.api.artifacts.ConfigurablePublishArtifact;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
+import org.gradle.api.artifacts.dsl.CapabilitiesHandler;
 import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.ComponentModuleMetadataHandler;
 import org.gradle.api.artifacts.dsl.DependencyConstraintHandler;
@@ -223,8 +224,12 @@ public class DefaultDependencyManagementServices implements DependencyManagement
                 artifactTypeRegistry);
         }
 
-        DependencyConstraintHandler createDependencyConstraintHandler(Instantiator instantiator, ConfigurationContainerInternal configurationContainer, DependencyFactory dependencyFactory) {
-            return instantiator.newInstance(DefaultDependencyConstraintHandler.class, configurationContainer, dependencyFactory);
+        CapabilitiesHandler createCapabilitiesHandler(ComponentModuleMetadataHandler componentModuleMetadataHandler) {
+            return new DefaultDependencyConstraintHandler.CapabilitiesHandlerSpike(componentModuleMetadataHandler);
+        }
+
+        DependencyConstraintHandler createDependencyConstraintHandler(Instantiator instantiator, ConfigurationContainerInternal configurationContainer, DependencyFactory dependencyFactory, CapabilitiesHandler capabilitiesHandler) {
+            return instantiator.newInstance(DefaultDependencyConstraintHandler.class, configurationContainer, dependencyFactory, capabilitiesHandler);
         }
 
         DefaultComponentMetadataHandler createComponentMetadataHandler(Instantiator instantiator, ImmutableModuleIdentifierFactory moduleIdentifierFactory) {
@@ -257,7 +262,8 @@ public class DefaultDependencyManagementServices implements DependencyManagement
                                                        BuildOperationExecutor buildOperationExecutor,
                                                        ArtifactTypeRegistry artifactTypeRegistry,
                                                        ComponentSelectorConverter componentSelectorConverter,
-                                                       AttributeContainerSerializer attributeContainerSerializer) {
+                                                       AttributeContainerSerializer attributeContainerSerializer,
+                                                       CapabilitiesHandler capabilitiesHandler) {
             return new ErrorHandlingConfigurationResolver(
                     new ShortCircuitEmptyConfigurationResolver(
                         new DefaultConfigurationResolver(
@@ -277,7 +283,8 @@ public class DefaultDependencyManagementServices implements DependencyManagement
                             buildOperationExecutor,
                             artifactTypeRegistry,
                             componentSelectorConverter,
-                            attributeContainerSerializer),
+                            attributeContainerSerializer,
+                            capabilitiesHandler),
                         componentIdentifierFactory,
                         moduleIdentifierFactory));
         }
