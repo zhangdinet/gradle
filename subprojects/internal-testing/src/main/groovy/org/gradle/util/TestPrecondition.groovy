@@ -118,6 +118,9 @@ enum TestPrecondition implements org.gradle.internal.Factory<Boolean> {
     JDK({
         ToolProvider.systemJavaCompiler != null
     }),
+    JDK10({
+        JavaVersion.current() == JavaVersion.VERSION_1_10
+    }),
     ONLINE({
         try {
             new URL("http://google.com").openConnection().getInputStream().close()
@@ -145,7 +148,7 @@ enum TestPrecondition implements org.gradle.internal.Factory<Boolean> {
         !PULL_REQUEST_BUILD.fulfilled
     }),
     KOTLIN_SCRIPT({
-        JDK8_OR_LATER.fulfilled && NOT_JDK_IBM.fulfilled
+        JDK8_OR_LATER.fulfilled && NOT_JDK_IBM.fulfilled && !JDK10.fulfilled
     }),
     XCODE({
         // Simplistic approach at detecting Xcode by assuming macOS imply Xcode is present
@@ -177,4 +180,3 @@ enum TestPrecondition implements org.gradle.internal.Factory<Boolean> {
         return isFulfilled()
     }
 }
-
