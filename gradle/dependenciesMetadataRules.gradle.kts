@@ -68,6 +68,9 @@ subprojects {
             replaceAsmWithOW2Asm("com.google.code.findbugs:findbugs")
             replaceAsmWithOW2Asm("org.parboiled:parboiled-java")
 
+            replaceCglibNodepWithCglib("org.spockframework:spock-core")
+            replaceCglibNodepWithCglib("org.jmock:jmock-legacy")
+
             //TODO check if we can upgrade the following dependencies and remove the rules
             downgradeIvy("org.codehaus.groovy:groovy-all")
             downgradeTestNG("org.codehaus.groovy:groovy-all")
@@ -167,6 +170,20 @@ fun ComponentMetadataHandler.replaceAsmWithOW2Asm(module: String) {
         }
     }
 }
+
+fun ComponentMetadataHandler.replaceCglibNodepWithCglib(module: String) {
+    withModule(module) {
+        allVariants {
+            withDependencies {
+                filter { it.name == "cglib-nodep" }.forEach {
+                    add("${it.group}:cglib")
+                }
+                removeAll { it.name == "cglib-nodep" }
+            }
+        }
+    }
+}
+
 
 fun ComponentMetadataHandler.replaceBeanshellWithApacheBeanshell(module: String) {
     withModule(module) {
