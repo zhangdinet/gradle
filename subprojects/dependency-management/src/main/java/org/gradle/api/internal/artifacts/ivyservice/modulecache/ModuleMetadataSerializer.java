@@ -125,6 +125,7 @@ public class ModuleMetadataSerializer {
                 writeAttributes(variant.getAttributes());
                 writeVariantDependencies(variant.getDependencies());
                 writeVariantConstraints(variant.getDependencyConstraints());
+                writeCapabilities(variant.getCapabilities());
                 writeVariantFiles(variant.getFiles());
             }
         }
@@ -151,6 +152,19 @@ public class ModuleMetadataSerializer {
             for (ExcludeMetadata exclude : excludes) {
                 writeString(exclude.getModuleId().getGroup());
                 writeString(exclude.getModuleId().getName());
+            }
+        }
+
+        private void writeCapabilities(ImmutableList<? extends ComponentVariant.Capability> capabilities) throws IOException {
+            encoder.writeSmallInt(capabilities.size());
+            for (ComponentVariant.Capability capability : capabilities) {
+                encoder.writeString(capability.getName());
+                encoder.writeNullableString(capability.getPrefer());
+                List<String> providedBy = capability.getProvidedBy();
+                encoder.writeSmallInt(providedBy.size());
+                for (String s : providedBy) {
+                    encoder.writeString(s);
+                }
             }
         }
 
@@ -412,7 +426,22 @@ public class ModuleMetadataSerializer {
                 MutableComponentVariant variant = metadata.addVariant(name, attributes);
                 readVariantDependencies(variant);
                 readVariantConstraints(variant);
+                readCapabilities(variant);
                 readVariantFiles(variant);
+            }
+        }
+
+        private void readCapabilities(MutableComponentVariant variant) throws IOException {
+            int count = decoder.readSmallInt();
+            for (int i=0; i<count; i++) {
+                String name = decoder.readString();
+                String prefer = decoder.readNullableString();
+                int providedCount = decoder.readSmallInt();
+                ImmutableList.Builder<String> providedBy = new ImmutableList.Builder<String>();
+                for (int j=0; j<providedCount; j++) {
+                    providedBy.add(decoder.readString());
+                }
+                variant.addCapability(name, providedBy.build(), prefer);
             }
         }
 

@@ -21,6 +21,8 @@ import org.gradle.api.artifacts.VersionConstraint;
 import org.gradle.internal.component.model.ExcludeMetadata;
 import org.gradle.internal.component.model.VariantResolveMetadata;
 
+import java.util.List;
+
 /**
  * An _immutable_ view of the variant of a component.
  *
@@ -34,6 +36,8 @@ public interface ComponentVariant extends VariantResolveMetadata {
     ImmutableList<? extends DependencyConstraint> getDependencyConstraints();
 
     ImmutableList<? extends File> getFiles();
+
+    ImmutableList<? extends Capability> getCapabilities();
 
     interface Dependency {
         String getGroup();
@@ -61,5 +65,11 @@ public interface ComponentVariant extends VariantResolveMetadata {
         String getName();
 
         String getUri();
+    }
+
+    interface Capability {
+        String getName();
+        List<String> getProvidedBy();
+        String getPrefer();
     }
 }

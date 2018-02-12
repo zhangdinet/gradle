@@ -16,16 +16,20 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.builder;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.gradle.api.Transformer;
+import org.gradle.api.artifacts.ComponentModuleMetadataDetails;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.component.ComponentSelector;
 import org.gradle.api.artifacts.result.ComponentSelectionReason;
+import org.gradle.api.internal.artifacts.dsl.ComponentModuleMetadataContainer;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.excludes.ModuleExclusion;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.DependencyGraphEdge;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.graph.DependencyGraphSelector;
 import org.gradle.api.internal.attributes.ImmutableAttributes;
+import org.gradle.internal.component.external.model.ComponentVariant;
 import org.gradle.internal.component.local.model.DslOriginDependencyMetadata;
 import org.gradle.internal.component.model.ComponentArtifactMetadata;
 import org.gradle.internal.component.model.ComponentResolveMetadata;
@@ -152,6 +156,40 @@ class EdgeState implements DependencyGraphEdge {
         for (ConfigurationMetadata targetConfiguration : targetConfigurations) {
             NodeState targetNodeState = resolveState.getNode(targetModuleRevision, targetConfiguration);
             this.targetNodes.add(targetNodeState);
+
+            // TODO: how to do this properly?
+            ImmutableList<? extends ComponentVariant.Capability> capabilities = targetConfiguration.getCapabilities();
+            ComponentModuleMetadataContainer replacementsData = (ComponentModuleMetadataContainer) resolveState.getModuleReplacementsData();
+            for (ComponentVariant.Capability capability : capabilities) {
+                final String prefer = capability.getPrefer();
+                if (prefer != null) {
+                    final String because = "capability " + capability.getName() + " is provided by " + Joiner.on(" and ").join(capability.getProvidedBy());
+                    for (String module : capability.getProvidedBy()) {
+                        if (!module.equals(prefer)) {
+                            ComponentModuleMetadataDetails details = replacementsData.module(module);
+                            details.replacedBy(prefer, because);
+                            ComponentState selected = resolveState.getModule(details.getId()).getSelected();
+                            if (selected != null) {
+                                // what a terrible hack!
+                                List<NodeState> nodes = selected.getNodes();
+                                List<ComponentState> unattachedDependencies = selected.getUnattachedDependencies();
+                                for (ComponentState unattachedDependency : unattachedDependencies) {
+                                    for (NodeState state : unattachedDependency.getNodes()) {
+                                        state.resetSelectionState();
+                                    }
+                                }
+                                resolveState.getDeselectVersionAction().execute(details.getId());
+                                for (NodeState node : nodes) {
+                                    List<EdgeState> incomingEdges = node.getIncomingEdges();
+                                    for (EdgeState incomingEdge : incomingEdges) {
+                                        incomingEdge.from.resetSelectionState();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

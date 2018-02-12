@@ -215,7 +215,7 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
             builder.addAll(variants);
         }
         for (MutableVariantImpl variant : newVariants) {
-            builder.add(new ImmutableVariantImpl(getComponentId(), variant.name, variant.attributes, ImmutableList.copyOf(variant.dependencies), ImmutableList.copyOf(variant.dependencyConstraints), ImmutableList.copyOf(variant.files)));
+            builder.add(new ImmutableVariantImpl(getComponentId(), variant.name, variant.attributes, ImmutableList.copyOf(variant.dependencies), ImmutableList.copyOf(variant.dependencyConstraints), ImmutableList.copyOf(variant.files), ImmutableList.copyOf(variant.capabilities)));
         }
         return builder.build();
     }
@@ -262,6 +262,7 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
         private final List<DependencyImpl> dependencies = new ArrayList<DependencyImpl>();
         private final List<DependencyConstraintImpl> dependencyConstraints = new ArrayList<DependencyConstraintImpl>();
         private final List<FileImpl> files = new ArrayList<FileImpl>();
+        private final List<CapabilityImpl> capabilities = new ArrayList<CapabilityImpl>();
 
         MutableVariantImpl(String name, ImmutableAttributes attributes) {
             this.name = name;
@@ -276,6 +277,11 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
         @Override
         public void addDependencyConstraint(String group, String module, VersionConstraint versionConstraint, String reason) {
             dependencyConstraints.add(new DependencyConstraintImpl(group, module, versionConstraint, reason));
+        }
+
+        @Override
+        public void addCapability(String name, List<String> providedBy, String prefer) {
+            capabilities.add(new CapabilityImpl(name, ImmutableList.copyOf(providedBy), prefer));
         }
 
         @Override
@@ -452,14 +458,16 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
         private final ImmutableList<DependencyImpl> dependencies;
         private final ImmutableList<DependencyConstraintImpl> dependencyConstraints;
         private final ImmutableList<FileImpl> files;
+        private final ImmutableList<CapabilityImpl> capabilities;
 
-        ImmutableVariantImpl(ModuleComponentIdentifier componentId, String name, ImmutableAttributes attributes, ImmutableList<DependencyImpl> dependencies, ImmutableList<DependencyConstraintImpl> dependencyConstraints, ImmutableList<FileImpl> files) {
+        ImmutableVariantImpl(ModuleComponentIdentifier componentId, String name, ImmutableAttributes attributes, ImmutableList<DependencyImpl> dependencies, ImmutableList<DependencyConstraintImpl> dependencyConstraints, ImmutableList<FileImpl> files, ImmutableList<CapabilityImpl> capabilities) {
             this.componentId = componentId;
             this.name = name;
             this.attributes = attributes;
             this.dependencies = dependencies;
             this.dependencyConstraints = dependencyConstraints;
             this.files = files;
+            this.capabilities = capabilities;
         }
 
         @Override
@@ -490,6 +498,11 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
         @Override
         public ImmutableList<? extends File> getFiles() {
             return files;
+        }
+
+        @Override
+        public ImmutableList<? extends Capability> getCapabilities() {
+            return capabilities;
         }
 
         @Override
@@ -529,4 +542,51 @@ abstract class AbstractMutableModuleComponentResolveMetadata implements MutableM
                 files);
         }
     }
+
+    protected static class CapabilityImpl implements ComponentVariant.Capability {
+        final String name;
+        final ImmutableList<String> providedBy;
+        final String prefer;
+
+        private CapabilityImpl(String name, ImmutableList<String> providedBy, String prefer) {
+            this.name = name;
+            this.providedBy = providedBy;
+            this.prefer = prefer;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            CapabilityImpl that = (CapabilityImpl) o;
+            return Objects.equal(name, that.name) &&
+                Objects.equal(providedBy, that.providedBy) &&
+                Objects.equal(prefer, that.prefer);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(name, providedBy, prefer);
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public List<String> getProvidedBy() {
+            return providedBy;
+        }
+
+        @Override
+        public String getPrefer() {
+            return prefer;
+        }
+    }
+
 }

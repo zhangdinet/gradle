@@ -41,7 +41,7 @@ class GradleFileModuleAdapter {
         jsonBuilder {
             formatVersion '0.3'
             builtBy {
-                gradle { }
+                gradle {}
             }
             component {
                 group this.group
@@ -103,6 +103,13 @@ class GradleFileModuleAdapter {
                             if (dc.reason) {
                                 reason dc.reason
                             }
+                        }
+                    })
+                    capabilities(v.capabilities.collect { c ->
+                        { ->
+                            name c.name
+                            providedBy c.providedBy
+                            prefer c.prefer
                         }
                     })
                 }

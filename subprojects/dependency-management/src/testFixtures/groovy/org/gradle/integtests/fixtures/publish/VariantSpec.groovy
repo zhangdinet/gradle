@@ -25,6 +25,9 @@ class VariantSpec {
     List<Object> constraints = []
     Map<String, String> attributes = [:]
     List<ArtifactSpec> artifacts = []
+    Map<String, CapabilitySpec> capabilities = [:].withDefault {
+        new CapabilitySpec((String)it)
+    }
 
     void dependsOn(coord) {
         dependsOn << coord
@@ -46,9 +49,36 @@ class VariantSpec {
         artifacts << new ArtifactSpec(name: name, url: url)
     }
 
+    void capability(String name, @DelegatesTo(value=CapabilitySpec, strategy=Closure.DELEGATE_FIRST) Closure<?> configuration) {
+        configuration.delegate = capabilities[name]
+        configuration.resolveStrategy = Closure.DELEGATE_FIRST
+        configuration()
+    }
+
     static class ArtifactSpec {
         String name
         String url
         String ext = 'jar'
+    }
+
+    static class CapabilitySpec {
+        final String name
+
+        CapabilitySpec(String name) {
+            this.name = name
+        }
+
+        List<String> providedBy = []
+        String prefer
+
+        void prefer(String prefer) {
+            this.prefer = prefer
+        }
+
+        void providedBy(String... values) {
+            values.each {
+                providedBy << (String) it
+            }
+        }
     }
 }

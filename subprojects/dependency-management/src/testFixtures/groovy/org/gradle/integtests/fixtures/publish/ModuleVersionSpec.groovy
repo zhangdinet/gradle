@@ -284,6 +284,9 @@ class ModuleVersionSpec {
                         def args = it.split(':') as List
                         dependsOn(*args)
                     }
+                    variant.capabilities.values().each {
+                        capability(it.name, it.providedBy, it.prefer)
+                    }
                 }
             }
         }

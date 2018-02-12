@@ -129,6 +129,11 @@ class VariantBackedConfigurationMetadata implements ConfigurationMetadata {
     }
 
     @Override
+    public ImmutableList<? extends ComponentVariant.Capability> getCapabilities() {
+        return variant.getCapabilities();
+    }
+
+    @Override
     public List<? extends ComponentArtifactMetadata> getArtifacts() {
         return ImmutableList.of();
     }
@@ -202,6 +207,11 @@ class VariantBackedConfigurationMetadata implements ConfigurationMetadata {
         @Override
         public ImmutableList<? extends File> getFiles() {
             return delegate.getFiles();
+        }
+
+        @Override
+        public ImmutableList<? extends Capability> getCapabilities() {
+            return delegate.getCapabilities();
         }
     }
 }
