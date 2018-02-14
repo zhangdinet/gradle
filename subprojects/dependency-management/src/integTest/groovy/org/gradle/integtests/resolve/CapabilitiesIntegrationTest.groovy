@@ -350,4 +350,53 @@ class CapabilitiesIntegrationTest extends AbstractModuleDependencyResolveTest {
 
     }
 
+    @RequiredFeatures(
+        @RequiredFeature(feature=GradleMetadataResolveRunner.GRADLE_METADATA, value="true")
+    )
+    def "forcefully upgrade dependency"() {
+        given:
+        repository {
+            'org:dep:1.0.0'()
+            'org:dep:1.0.1'()
+            'org:platform-rules:1.0' {
+                constraint(group:'org', artifact:'dep', version:'1.0.1', reason:'critical vulnerability in 1.0.0', rejects:['1.0.0'])
+            }
+        }
+
+        buildFile << """
+            dependencies {
+                conf 'org:platform-rules:1.0'
+                conf 'org:dep:1.0.0'
+            }
+        """
+
+        when:
+        repositoryInteractions {
+            'org:dep:1.0.0' {
+                expectGetMetadata()
+            }
+            'org:dep:1.0.1' {
+                expectResolve()
+            }
+            'org:platform-rules:1.0' {
+                expectResolve()
+            }
+        }
+
+        then:
+        run ':checkDeps'
+
+        and:
+        resolve.expectGraph {
+            root(":", ":test:") {
+                module('org:platform-rules:1.0') {
+                    module('org:dep:1.0.1')
+                }
+                edge('org:dep:1.0.0', 'org:dep:1.0.1') {
+                    byReason('critical vulneradility in 1.0.0')
+                }
+            }
+        }
+    }
+
 }
