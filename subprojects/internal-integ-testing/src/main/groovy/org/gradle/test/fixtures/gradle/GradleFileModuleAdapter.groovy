@@ -109,7 +109,9 @@ class GradleFileModuleAdapter {
                         { ->
                             name c.name
                             providedBy c.providedBy
-                            prefer c.prefer
+                            if (c.prefer) {
+                                prefer c.prefer
+                            }
                         }
                     })
                 }

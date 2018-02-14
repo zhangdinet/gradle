@@ -16,6 +16,7 @@
 
 package org.gradle.integtests.resolve
 
+import groovy.transform.NotYetImplemented
 import org.gradle.integtests.fixtures.GradleMetadataResolveRunner
 import org.gradle.integtests.fixtures.RequiredFeature
 import org.gradle.integtests.fixtures.RequiredFeatures
@@ -397,6 +398,71 @@ class CapabilitiesIntegrationTest extends AbstractModuleDependencyResolveTest {
                 }
             }
         }
+    }
+
+    @RequiredFeatures(
+        @RequiredFeature(feature=GradleMetadataResolveRunner.GRADLE_METADATA, value="true")
+    )
+    @NotYetImplemented
+    def "can express preference for capabilities declared in published modules"() {
+        given:
+        repository {
+            'cglib:cglib-nodep:3.2.5' {
+                variant('api') {
+                    capability('cglib') {
+                        providedBy 'cglib:cglib-nodep'
+                    }
+                }
+                variant('runtime') {
+                    capability('cglib') {
+                        providedBy 'cglib:cglib-nodep'
+                    }
+                }
+            }
+            'cglib:cglib:3.2.5' {
+                variant('api') {
+                    capability('cglib') {
+                        providedBy 'cglib:cglib'
+                    }
+                }
+                variant('runtime') {
+                    capability('cglib') {
+                        providedBy 'cglib:cglib'
+                    }
+                }
+            }
+        }
+
+        buildFile << """
+
+            dependencies {
+               conf "cglib:cglib-nodep:3.2.5"
+               conf "cglib:cglib:3.2.5"
+            
+               constraints {
+                  capabilities {
+                     capability('cglib') {
+                        it.prefer 'cglib:cglib'
+                     }
+                  }
+               }
+            }
+        """
+
+        when:
+        repositoryInteractions {
+            'cglib:cglib:3.2.5' {
+                expectResolve()
+            }
+            'cglib:cglib-nodep:3.2.5' {
+                expectGetMetadata()
+            }
+        }
+        run 'dependencyInsight', '--configuration', 'conf', '--dependency', 'cglib'
+
+        then:
+        outputContains """cglib:cglib:3.2.5 (capability cglib is provided by cglib:cglib-nodep and cglib:cglib)
+"""
     }
 
 }
