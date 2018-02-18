@@ -92,7 +92,7 @@ class XcodeMultipleSwiftProjectIntegrationTest extends AbstractXcodeIntegrationS
 
         then:
         resultReleaseApp.assertTasksExecuted(':greeter:compileReleaseSwift', ':greeter:linkRelease', ':greeter:stripSymbolsRelease',
-            ':app:compileReleaseSwift', ':app:linkRelease', ':app:installRelease', ':app:_xcode___App_Release')
+            ':app:compileReleaseSwift', ':app:linkRelease', ':app:stripSymbolsRelease', ':app:installRelease', ':app:_xcode___App_Release')
     }
 
     def "can create xcode project for Swift application with transitive dependencies"() {

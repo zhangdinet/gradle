@@ -217,8 +217,8 @@ apply plugin: 'cpp-application'
             .succeeds()
 
         then:
-        resultRelease.assertTasksExecuted(':compileReleaseCpp', ':linkRelease', ':installRelease', ':_xcode___App_Release')
-        resultRelease.assertTasksNotSkipped(':compileReleaseCpp', ':linkRelease', ':installRelease', ':_xcode___App_Release')
+        resultRelease.assertTasksExecuted(':compileReleaseCpp', ':linkRelease', ':stripSymbolsRelease', ':installRelease', ':_xcode___App_Release')
+        resultRelease.assertTasksNotSkipped(':compileReleaseCpp', ':linkRelease', ':stripSymbolsRelease', ':installRelease', ':_xcode___App_Release')
         releaseBinary.exec().out == app.expectedOutput
         fixture(releaseBinary).assertHasDebugSymbolsFor(app.sourceFileNamesWithoutHeaders)
     }

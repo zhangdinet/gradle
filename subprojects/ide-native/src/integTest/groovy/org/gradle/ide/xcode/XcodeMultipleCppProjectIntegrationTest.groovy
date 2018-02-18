@@ -86,7 +86,7 @@ class XcodeMultipleCppProjectIntegrationTest extends AbstractXcodeIntegrationSpe
 
         then:
         resultReleaseApp.assertTasksExecuted(':greeter:compileReleaseCpp', ':greeter:linkRelease', ':greeter:stripSymbolsRelease',
-            ':app:compileReleaseCpp', ':app:linkRelease', ':app:installRelease', ':app:_xcode___App_Release')
+            ':app:compileReleaseCpp', ':app:linkRelease', ':app:stripSymbolsRelease', ':app:installRelease', ':app:_xcode___App_Release')
     }
 
     def "can create xcode project for C++ application with transitive dependencies"() {
