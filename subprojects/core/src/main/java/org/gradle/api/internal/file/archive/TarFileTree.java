@@ -25,8 +25,10 @@ import org.gradle.api.file.RelativePath;
 import org.gradle.api.internal.file.AbstractFileTreeElement;
 import org.gradle.api.internal.file.DefaultFileVisitDetails;
 import org.gradle.api.internal.file.FileSystemSubset;
+import org.gradle.api.internal.file.collections.DirectoryElementVisitor;
 import org.gradle.api.internal.file.collections.DirectoryFileTree;
 import org.gradle.api.internal.file.collections.DirectoryFileTreeFactory;
+import org.gradle.api.internal.file.collections.FailOnBrokenSymbolicLinkVisitor;
 import org.gradle.api.internal.file.collections.FileSystemMirroringFileTree;
 import org.gradle.api.internal.file.collections.MinimalFileTree;
 import org.gradle.api.internal.file.collections.SingletonFileTree;
@@ -73,6 +75,10 @@ public class TarFileTree implements MinimalFileTree, FileSystemMirroringFileTree
     }
 
     public void visit(FileVisitor visitor) {
+        visit(new FailOnBrokenSymbolicLinkVisitor(visitor));
+    }
+
+    public void visit(DirectoryElementVisitor visitor) {
         InputStream inputStream;
         try {
             inputStream = new BufferedInputStream(resource.read());
@@ -95,14 +101,14 @@ public class TarFileTree implements MinimalFileTree, FileSystemMirroringFileTree
         }
     }
 
-    private void visitImpl(FileVisitor visitor, InputStream inputStream) throws IOException {
+    private void visitImpl(DirectoryElementVisitor visitor, InputStream inputStream) throws IOException {
         AtomicBoolean stopFlag = new AtomicBoolean();
         NoCloseTarInputStream tar = new NoCloseTarInputStream(inputStream);
         TarEntry entry;
         File expandedDir = getExpandedDir();
         while (!stopFlag.get() && (entry = tar.getNextEntry()) != null) {
             if (entry.isDirectory()) {
-                visitor.visitDir(new DetailsImpl(resource, expandedDir, entry, tar, stopFlag, chmod));
+                visitor.visitDirectory(new DetailsImpl(resource, expandedDir, entry, tar, stopFlag, chmod));
             } else {
                 visitor.visitFile(new DetailsImpl(resource, expandedDir, entry, tar, stopFlag, chmod));
             }
@@ -142,7 +148,7 @@ public class TarFileTree implements MinimalFileTree, FileSystemMirroringFileTree
     }
 
     @Override
-    public void visitTreeOrBackingFile(final FileVisitor visitor) {
+    public void visitTreeOrBackingFile(final DirectoryElementVisitor visitor) {
         File backingFile = getBackingFile();
         if (backingFile != null) {
             new SingletonFileTree(backingFile).visit(visitor);
@@ -154,7 +160,7 @@ public class TarFileTree implements MinimalFileTree, FileSystemMirroringFileTree
             visit(new FileVisitor() {
                 @Override
                 public void visitDir(FileVisitDetails dirDetails) {
-                    visitor.visitDir(new DefaultFileVisitDetails(dirDetails.getFile(), chmod, stat));
+                    visitor.visitDirectory(new DefaultFileVisitDetails(dirDetails.getFile(), chmod, stat));
                 }
 
                 @Override

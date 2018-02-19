@@ -67,6 +67,12 @@ public class SingleIncludePatternFileTree implements MinimalFileTree {
         doVisit(visitor, baseDir, new LinkedList<String>(), 0, new AtomicBoolean());
     }
 
+    @Override
+    public void visit(DirectoryElementVisitor visitor) {
+        // TODO: fix this
+        throw new UnsupportedOperationException("FIXME");
+    }
+
     private void doVisit(FileVisitor visitor, File file, LinkedList<String> relativePath, int segmentIndex, AtomicBoolean stopFlag) {
         if (stopFlag.get()) {
             return;
@@ -139,7 +145,7 @@ public class SingleIncludePatternFileTree implements MinimalFileTree {
     }
 
     @Override
-    public void visitTreeOrBackingFile(FileVisitor visitor) {
+    public void visitTreeOrBackingFile(DirectoryElementVisitor visitor) {
         visit(visitor);
     }
 }
