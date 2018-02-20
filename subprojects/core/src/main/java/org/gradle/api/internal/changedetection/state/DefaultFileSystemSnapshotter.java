@@ -20,6 +20,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.gradle.api.UncheckedIOException;
 import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.RelativePath;
@@ -45,6 +46,8 @@ import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.normalization.internal.InputNormalizationStrategy;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 
@@ -252,11 +255,15 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
 
     private static final HashCode SIGNATURE = Hashing.md5().hashString(SymbolicLinkSnapshot.class.getName());
     private FileHashSnapshot symbolicLinkSnapshot(FileTreeElement symbolicLinkDetails) {
-        Hasher hasher = Hashing.md5().newHasher();
-        hasher.putHash(SIGNATURE);
-        hasher.putString(symbolicLinkDetails.getFile().getAbsolutePath());
-        hasher.putString(symbolicLinkDetails.getPath());
-        return new FileHashSnapshot(hasher.hash(), symbolicLinkDetails.getLastModified());
+        try {
+            Hasher hasher = Hashing.md5().newHasher();
+            hasher.putHash(SIGNATURE);
+            hasher.putString(Files.readSymbolicLink(symbolicLinkDetails.getFile().toPath()).toFile().getPath());
+            hasher.putString(symbolicLinkDetails.getPath());
+            return new FileHashSnapshot(hasher.hash(), symbolicLinkDetails.getLastModified());
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private static class HashBackedSnapshot implements Snapshot {
