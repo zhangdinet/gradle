@@ -176,7 +176,7 @@ fun ComponentMetadataHandler.replaceCglibNodepWithCglib(module: String) {
         allVariants {
             withDependencies {
                 filter { it.name == "cglib-nodep" }.forEach {
-                    add("${it.group}:cglib:${it.versionConstraint.preferredVersion}")
+                    add("${it.group}:cglib:3.2.6")
                 }
                 removeAll { it.name == "cglib-nodep" }
             }
