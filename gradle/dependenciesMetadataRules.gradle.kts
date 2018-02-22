@@ -184,7 +184,6 @@ fun ComponentMetadataHandler.replaceCglibNodepWithCglib(module: String) {
     }
 }
 
-
 fun ComponentMetadataHandler.replaceBeanshellWithApacheBeanshell(module: String) {
     withModule(module) {
         allVariants {
