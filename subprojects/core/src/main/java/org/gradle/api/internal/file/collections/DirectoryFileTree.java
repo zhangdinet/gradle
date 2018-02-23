@@ -21,7 +21,6 @@ import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
 import org.gradle.api.file.RelativePath;
-import org.gradle.api.file.ReproducibleFileVisitor;
 import org.gradle.api.internal.file.DefaultFileVisitDetails;
 import org.gradle.api.internal.file.FileSystemSubset;
 import org.gradle.api.logging.Logger;
@@ -115,12 +114,12 @@ public class DirectoryFileTree implements MinimalFileTree, PatternFilterableFile
 
     @Override
     public void visit(FileVisitor visitor) {
-        visitFrom(visitor, dir, RelativePath.EMPTY_ROOT);
+        visitFrom(new FailOnBrokenSymbolicLinkVisitor(visitor), dir, RelativePath.EMPTY_ROOT);
     }
 
     @Override
     public void visit(DirectoryElementVisitor visitor) {
-        visitFrom(visitor, dir, RelativePath.EMPTY_ROOT, false);
+        visitFrom(visitor, dir, RelativePath.EMPTY_ROOT);
     }
 
     /**
@@ -128,18 +127,14 @@ public class DirectoryFileTree implements MinimalFileTree, PatternFilterableFile
      * (but not the directory itself) will be checked with {@link #isAllowed(FileTreeElement, Spec)} and notified to
      * the listener.  If it is a file, the file will be checked and notified.
      */
-    public void visitFrom(FileVisitor visitor, File fileOrDirectory, RelativePath path) {
-        visitFrom(new FailOnBrokenSymbolicLinkVisitor(visitor), fileOrDirectory, path, visitor instanceof ReproducibleFileVisitor && ((ReproducibleFileVisitor) visitor).isReproducibleFileOrder());
-    }
-
-    public void visitFrom(DirectoryElementVisitor visitor, File fileOrDirectory, RelativePath path, boolean isReproducibleOrder) {
+    public void visitFrom(DirectoryElementVisitor visitor, File fileOrDirectory, RelativePath path) {
         AtomicBoolean stopFlag = new AtomicBoolean();
         Spec<FileTreeElement> spec = patternSet.getAsSpec();
         if (fileOrDirectory.exists()) {
             if (fileOrDirectory.isFile()) {
                 processSingleFile(fileOrDirectory, visitor, spec, stopFlag);
             } else {
-                walkDir(fileOrDirectory, path, visitor, spec, stopFlag, isReproducibleOrder);
+                walkDir(fileOrDirectory, path, visitor, spec, stopFlag, visitor.isReproducibleOrder());
             }
         } else {
             LOGGER.info("file or directory '{}', not found", fileOrDirectory);

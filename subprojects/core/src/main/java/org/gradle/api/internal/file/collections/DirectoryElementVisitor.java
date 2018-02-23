@@ -24,4 +24,6 @@ public interface DirectoryElementVisitor {
     void visitDirectory(FileVisitDetails details);
 
     void visitBrokenSymbolicLink(FileVisitDetails details);
+
+    boolean isReproducibleOrder();
 }

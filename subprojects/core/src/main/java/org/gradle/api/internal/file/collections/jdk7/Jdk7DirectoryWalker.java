@@ -52,10 +52,6 @@ public class Jdk7DirectoryWalker implements DirectoryWalker {
         return spec.isSatisfiedBy(element);
     }
 
-    public void walkDir(final File rootDir, final RelativePath rootPath, final FileVisitor visitor, final Spec<? super FileTreeElement> spec, final AtomicBoolean stopFlag, final boolean postfix) {
-
-    }
-
     @Override
     public void walkDir(final File rootDir, final RelativePath rootPath, final DirectoryElementVisitor visitor, final Spec<? super FileTreeElement> spec, final AtomicBoolean stopFlag, final boolean postfix) {
         final Deque<FileVisitDetails> directoryDetailsHolder = new LinkedList<FileVisitDetails>();

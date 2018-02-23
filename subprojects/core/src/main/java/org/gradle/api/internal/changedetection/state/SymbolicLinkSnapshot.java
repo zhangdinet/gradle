@@ -24,9 +24,9 @@ public class SymbolicLinkSnapshot implements FileSnapshot {
     private final String path;
     private final RelativePath relativePath;
     private final boolean root;
-    private final FileContentSnapshot content;
+    private final SymbolicLinkHashSnapshot content;
 
-    public SymbolicLinkSnapshot(String path, RelativePath relativePath, boolean root, FileContentSnapshot content) {
+    public SymbolicLinkSnapshot(String path, RelativePath relativePath, boolean root, SymbolicLinkHashSnapshot content) {
         this.path = path;
         this.relativePath = relativePath;
         this.root = root;
@@ -71,7 +71,7 @@ public class SymbolicLinkSnapshot implements FileSnapshot {
     @Override
     public SymbolicLinkSnapshot withContentHash(HashCode contentHash) {
         if (!contentHash.equals(getContent().getContentMd5())) {
-            return new SymbolicLinkSnapshot(path, relativePath, root, new FileHashSnapshot(contentHash));
+            return new SymbolicLinkSnapshot(path, relativePath, root, new SymbolicLinkHashSnapshot(contentHash));
         }
         return this;
     }

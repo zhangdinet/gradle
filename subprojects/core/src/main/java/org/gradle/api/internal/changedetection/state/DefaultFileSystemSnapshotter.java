@@ -254,13 +254,13 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
     }
 
     private static final HashCode SIGNATURE = Hashing.md5().hashString(SymbolicLinkSnapshot.class.getName());
-    private FileHashSnapshot symbolicLinkSnapshot(FileTreeElement symbolicLinkDetails) {
+    private SymbolicLinkHashSnapshot symbolicLinkSnapshot(FileTreeElement symbolicLinkDetails) {
         try {
             Hasher hasher = Hashing.md5().newHasher();
             hasher.putHash(SIGNATURE);
             hasher.putString(Files.readSymbolicLink(symbolicLinkDetails.getFile().toPath()).toFile().getPath());
             hasher.putString(symbolicLinkDetails.getPath());
-            return new FileHashSnapshot(hasher.hash(), symbolicLinkDetails.getLastModified());
+            return new SymbolicLinkHashSnapshot(hasher.hash(), symbolicLinkDetails.getLastModified());
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
@@ -318,6 +318,11 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
         @Override
         public void visitBrokenSymbolicLink(FileVisitDetails symDetails) {
             fileTreeElements.add(new SymbolicLinkSnapshot(internPath(symDetails.getFile()), symDetails.getRelativePath(), false, symbolicLinkSnapshot(symDetails)));
+        }
+
+        @Override
+        public boolean isReproducibleOrder() {
+            return false;
         }
     }
 }

@@ -16,5 +16,20 @@
 
 package org.gradle.api.internal.changedetection.state;
 
-public class SymbolicHashSnapshot {
+import org.gradle.internal.file.FileType;
+import org.gradle.internal.hash.HashCode;
+
+public class SymbolicLinkHashSnapshot extends AbstractFileContentSnapshot {
+    public SymbolicLinkHashSnapshot(HashCode hash) {
+        this(hash, 0L);
+    }
+
+    public SymbolicLinkHashSnapshot(HashCode hash, long lastModified) {
+        super(hash, lastModified);
+    }
+
+    @Override
+    public FileType getType() {
+        return FileType.SymbolicLink;
+    }
 }

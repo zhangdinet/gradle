@@ -16,60 +16,16 @@
 
 package org.gradle.api.internal.changedetection.state;
 
-import com.google.common.base.Objects;
 import org.gradle.internal.file.FileType;
 import org.gradle.internal.hash.HashCode;
 
-public class FileHashSnapshot implements FileContentSnapshot {
-    private final HashCode hash;
-    private final transient long lastModified; // Currently not persisted
-
+public class FileHashSnapshot extends AbstractFileContentSnapshot {
     public FileHashSnapshot(HashCode hash) {
         this(hash, 0L);
     }
 
     public FileHashSnapshot(HashCode hash, long lastModified) {
-        this.hash = hash;
-        this.lastModified = lastModified;
-    }
-
-    public boolean isContentUpToDate(FileContentSnapshot snapshot) {
-        if (!(snapshot instanceof FileHashSnapshot)) {
-            return false;
-        }
-        FileHashSnapshot other = (FileHashSnapshot) snapshot;
-        return Objects.equal(hash, other.hash);
-    }
-
-    @Override
-    public boolean isContentAndMetadataUpToDate(FileContentSnapshot snapshot) {
-        if (!(snapshot instanceof FileHashSnapshot)) {
-            return false;
-        }
-        FileHashSnapshot other = (FileHashSnapshot) snapshot;
-        return lastModified == other.lastModified && Objects.equal(hash, other.hash);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        FileHashSnapshot that = (FileHashSnapshot) o;
-        return Objects.equal(hash, that.hash);
-    }
-
-    @Override
-    public int hashCode() {
-        return hash.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return hash.toString();
+        super(hash, lastModified);
     }
 
     @Override
@@ -77,8 +33,4 @@ public class FileHashSnapshot implements FileContentSnapshot {
         return FileType.RegularFile;
     }
 
-    @Override
-    public HashCode getContentMd5() {
-        return hash;
-    }
 }

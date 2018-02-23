@@ -19,12 +19,17 @@ package org.gradle.api.internal.file.collections;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
+import org.gradle.api.file.ReproducibleFileVisitor;
 
 public class FailOnBrokenSymbolicLinkVisitor implements DirectoryElementVisitor {
     private final FileVisitor visitor;
 
     public FailOnBrokenSymbolicLinkVisitor(FileVisitor visitor) {
         this.visitor = visitor;
+    }
+
+    public FileVisitor getDelegate() {
+        return visitor;
     }
 
     @Override
@@ -40,5 +45,10 @@ public class FailOnBrokenSymbolicLinkVisitor implements DirectoryElementVisitor 
     @Override
     public void visitBrokenSymbolicLink(FileVisitDetails details) {
         throw new GradleException(String.format("Could not list contents of '%s'. Couldn't follow symbolic link.", details.getFile()));
+    }
+
+    @Override
+    public boolean isReproducibleOrder() {
+        return visitor instanceof ReproducibleFileVisitor && ((ReproducibleFileVisitor) visitor).isReproducibleFileOrder();
     }
 }
