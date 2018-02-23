@@ -24,6 +24,7 @@ import org.gradle.internal.file.FileType
 import org.gradle.internal.hash.TestFileHasher
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
+import spock.lang.Ignore
 import spock.lang.Specification
 
 class DefaultFileSystemSnapshotterTest extends Specification {
@@ -64,6 +65,24 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         snapshot2.is(snapshot)
     }
 
+    @Ignore("Not sure what the expectation should be")
+    def "fetches details of a dangling symbolic link and caches the result"() {
+        def l = tmpDir.file("l")
+        l.createLink('m')
+
+        expect:
+        def snapshot = snapshotter.snapshotSelf(l)
+        snapshot.path == l.path
+        snapshot.name == "l"
+        snapshot.type == FileType.SymbolicLink
+        snapshot.root
+        snapshot.relativePath.toString() == "l"
+        snapshot.content == MissingFileContentSnapshot.instance
+
+        def snapshot2 = snapshotter.snapshotSelf(l)
+        snapshot2.is(snapshot)
+    }
+
     def "fetches details of a missing file and caches the result"() {
         def f = tmpDir.file("f")
 
@@ -85,11 +104,12 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         d.createFile("f1")
         d.createFile("d1/f2")
         d.createDir("d2")
+        d.file('l1').createLink('m1')
 
         expect:
         def snapshot = snapshotter.snapshotDirectoryTree(d)
         snapshot.path == d.path
-        snapshot.descendants.size() == 4
+        snapshot.descendants.size() == 5
 
         def snapshot2 = snapshotter.snapshotDirectoryTree(d)
         snapshot2.is(snapshot)
@@ -112,12 +132,13 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         d.createFile("f1")
         d.createFile("d1/f2")
         d.createDir("d2")
+        d.file('l1').createLink('m1')
         def tree = TestFiles.directoryFileTreeFactory().create(d)
 
         expect:
         def snapshot = snapshotter.snapshotDirectoryTree(tree)
         snapshot.path == d.path
-        snapshot.descendants.size() == 4
+        snapshot.descendants.size() == 5
 
         def snapshot2 = snapshotter.snapshotDirectoryTree(tree)
         snapshot2.is(snapshot)
@@ -134,6 +155,9 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         d.createDir("d2")
         d.createFile("d2/f1")
         d.createFile("d2/f2")
+        d.file('l1').createLink('m1')
+        d.file('d2/l1').createLink('m1')
+        d.file('d2/l2').createLink('m2')
         def patterns = TestFiles.patternSetFactory.create()
         patterns.include "**/*1"
         def tree = TestFiles.directoryFileTreeFactory().create(d, patterns)
@@ -141,14 +165,14 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         expect:
         def snapshot = snapshotter.snapshotDirectoryTree(tree)
         snapshot.path == d.path
-        snapshot.descendants.size() == 5
+        snapshot.descendants.size() == 7
 
         def snapshot2 = snapshotter.snapshotDirectoryTree(tree)
         !snapshot2.is(snapshot)
 
         def snapshot3 = snapshotter.snapshotDirectoryTree(d)
         !snapshot3.is(snapshot)
-        snapshot3.descendants.size() == 7
+        snapshot3.descendants.size() == 10
 
         def snapshot4 = snapshotter.snapshotDirectoryTree(TestFiles.directoryFileTreeFactory().create(d))
         !snapshot4.is(snapshot)
@@ -161,6 +185,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         d.createFile("f1")
         d.createFile("d1/f2")
         d.createFile("d1/f1")
+        d.file('l1').createLink('m1')
         def unfilteredTree = TestFiles.directoryFileTreeFactory().create(d)
         snapshotter.snapshotDirectoryTree(unfilteredTree)
 
@@ -176,7 +201,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         def snapshot = snapshotter.snapshotDirectoryTree(filteredTree)
 
         then: "The filtered tree uses the cached state"
-        snapshot.descendants*.relativePath*.pathString as Set == ["d1", "d1/f1", "f1"] as Set
+        snapshot.descendants*.relativePath*.pathString as Set == ["d1", "d1/f1", "f1", "l1"] as Set
     }
 
     def "snapshots a file and caches the result"() {
@@ -190,6 +215,24 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         f << "some other content"
 
         def snapshot2 = snapshotter.snapshotAll(f)
+        hash(snapshot) != hash(snapshot2)
+    }
+
+    @Ignore("Not sure what the expectation should be")
+    def "snapshots a dangling symbolic link and caches the result"() {
+        def l = tmpDir.file("l")
+        l.createLink('m')
+
+        expect:
+        def snapshot = snapshotter.snapshotAll(l)
+        snapshotter.snapshotAll(l).is(snapshot)
+
+        fileSystemMirror.beforeTaskOutputChanged()
+        l.delete()
+        l.createLink('m-alt')
+
+
+        def snapshot2 = snapshotter.snapshotAll(l)
         hash(snapshot) != hash(snapshot2)
     }
 
@@ -211,6 +254,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         def f = tmpDir.createDir("dir")
         f.createFile("child1/f")
         f.createFile("child2/f")
+        f.file("child2/l").createLink('m')
 
         expect:
         def snapshot = snapshotter.snapshotAll(f)
@@ -227,27 +271,34 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         def f = tmpDir.createFile("file")
         def d = tmpDir.createDir("dir")
         def m = tmpDir.file("missing")
+        def l = tmpDir.file('link')
+        l.createLink('missing')
 
         given:
         snapshotter.snapshotSelf(f)
         snapshotter.snapshotSelf(d)
         snapshotter.snapshotSelf(m)
+        snapshotter.snapshotSelf(l)
 
         expect:
         snapshotter.exists(f)
         snapshotter.exists(d)
         !snapshotter.exists(m)
+        !snapshotter.exists(l)
     }
 
     def "determines whether file exists when snapshot is not cached"() {
         def f = tmpDir.createFile("file")
         def d = tmpDir.createDir("dir")
         def m = tmpDir.file("missing")
+        def l = tmpDir.file('l')
+        l.createLink('missing')
 
         expect:
         snapshotter.exists(f)
         snapshotter.exists(d)
         !snapshotter.exists(m)
+        !snapshotter.exists(l)
     }
 
     def hash(Snapshot snapshot) {
