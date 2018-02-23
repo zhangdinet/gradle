@@ -21,10 +21,9 @@ java {
 }
 
 dependencies {
-    compile(project(":distributionsDependencies"))
-
-    api(Libraries.guava.coordinates)
+    api(project(":distributionsDependencies"))
     api(Libraries.jsr305.coordinates)
+    api(Libraries.guava.coordinates)
     api(Libraries.fastutil.coordinates)
 
     implementation(Libraries.slf4jApi.coordinates)

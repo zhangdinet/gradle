@@ -21,6 +21,9 @@ dependencies {
     compile project(':core')
     compile project(':dependencyManagement')
 
+    implementation Libraries.commonsLang.coordinates
+    implementation Libraries.gson.coordinates
+
     integTestRuntime project(":ivy")
     integTestRuntime project(":maven")
 }

@@ -19,9 +19,11 @@ plugins {
 }
 
 dependencies {
-    compile Libraries.groovy.coordinates
-    compile Libraries.commonsIo.coordinates
-    compile Libraries.snakeyaml.coordinates
+    implementation Libraries.groovy.coordinates
+    implementation Libraries.commonsIo.coordinates
+    implementation Libraries.snakeyaml.coordinates
+    implementation Libraries.gson.coordinates
+
     compile project(':core')
     compile project(':platformBase')
     compile project(':diagnostics')

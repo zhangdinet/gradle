@@ -10,6 +10,8 @@ dependencies {
     compile project(":platformJvm")
     compile project(":languageJava")
 
+    implementation Libraries.asm.coordinates
+
     // TODO - get rid of this cycle
     integTestRuntime project(':plugins')
 }

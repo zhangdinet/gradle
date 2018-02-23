@@ -7,7 +7,10 @@ plugins {
 sourceCompatibility = 1.6
 
 dependencies {
-    compile Libraries.groovy.coordinates
+    implementation Libraries.asm.coordinates
+    implementation Libraries.asmCommons.coordinates
+    implementation Libraries.groovy.coordinates
+
     compile project(":core")
     compile project(":platformJvm")
     compile project(":languageJvm")
