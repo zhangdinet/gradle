@@ -18,10 +18,13 @@ package org.gradle.api.internal.changedetection.state
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.test.fixtures.file.TestFile
+import org.gradle.util.Requires
+import org.gradle.util.TestPrecondition
 
 import java.nio.file.Files
 import java.nio.file.LinkOption
 
+@Requires(TestPrecondition.SYMLINKS)
 abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractIntegrationSpec {
     def "can handle a dangling symbolic link"() {
         given:
