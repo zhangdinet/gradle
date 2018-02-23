@@ -18,7 +18,6 @@ package org.gradle.api.internal.changedetection.state
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.test.fixtures.file.TestFile
-import spock.lang.Ignore
 
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -106,16 +105,16 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         assertTaskIsOutOfDate("checkCreated")
     }
 
-    @Ignore("Broken for OutputDirectory...")
     def "can detect changes to the target directory of a symbolic link"() {
         given:
         makeScenarioProject()
         targetFile.createDir()
+        targetFile.file('a-file').text = 'with some text'
 
         makeTaskUpToDate('checkCreated')
 
         when:
-        targetFile.file('a-new-file').text = 'with some text'
+        targetFile.file('a-file').text = 'with some different text'
 
         then:
         assertTaskIsOutOfDate("checkCreated")
