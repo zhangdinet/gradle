@@ -189,23 +189,23 @@ public class CompositeFileTreeTest {
     }
 
     @Factory
-    public static Matcher<FailOnBrokenSymbolicLinkVisitor> aVisitorDelegatingTo(FileVisitor prefix) {
-        return new FileVisitorAdapterMatcher(prefix);
+    public static Matcher<FailOnBrokenSymbolicLinkVisitor> aVisitorDelegatingTo(FileVisitor visitor) {
+        return new FileVisitorAdapterMatcher(visitor);
     }
 
     public static class FileVisitorAdapterMatcher extends TypeSafeMatcher<FailOnBrokenSymbolicLinkVisitor> {
-        private FileVisitor prefix;
+        private FileVisitor visitor;
 
-        public FileVisitorAdapterMatcher(FileVisitor prefix) {
-            this.prefix = prefix;
+        public FileVisitorAdapterMatcher(FileVisitor visitor) {
+            this.visitor = visitor;
         }
 
         public boolean matchesSafely(FailOnBrokenSymbolicLinkVisitor s) {
-            return s.getDelegate().equals(prefix);
+            return s.getDelegate().equals(visitor);
         }
 
         public void describeTo(Description description) {
-            description.appendText("a visitor delegating to ").appendValue(prefix.getClass().getCanonicalName()).toString();
+            description.appendText("a visitor delegating to ").appendValue(visitor.getClass().getCanonicalName()).toString();
         }
     }
 }

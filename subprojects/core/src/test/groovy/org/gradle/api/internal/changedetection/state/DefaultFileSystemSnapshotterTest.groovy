@@ -26,7 +26,6 @@ import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
 import org.junit.Rule
-import spock.lang.Ignore
 import spock.lang.Specification
 
 class DefaultFileSystemSnapshotterTest extends Specification {
@@ -64,25 +63,6 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         snapshot.content == DirContentSnapshot.instance
 
         def snapshot2 = snapshotter.snapshotSelf(d)
-        snapshot2.is(snapshot)
-    }
-
-    @Ignore("Not sure what the expectation should be")
-    @Requires(TestPrecondition.SYMLINKS)
-    def "fetches details of a dangling symbolic link and caches the result"() {
-        def l = tmpDir.file("l")
-        l.createLink('m')
-
-        expect:
-        def snapshot = snapshotter.snapshotSelf(l)
-        snapshot.path == l.path
-        snapshot.name == "l"
-        snapshot.type == FileType.SymbolicLink
-        snapshot.root
-        snapshot.relativePath.toString() == "l"
-        snapshot.content == MissingFileContentSnapshot.instance
-
-        def snapshot2 = snapshotter.snapshotSelf(l)
         snapshot2.is(snapshot)
     }
 
@@ -312,20 +292,19 @@ class DefaultFileSystemSnapshotterTest extends Specification {
         hash(snapshot) != hash(snapshot2)
     }
 
-    @Ignore("Not sure what the expectation should be")
     @Requires(TestPrecondition.SYMLINKS)
-    def "snapshots a dangling symbolic link and caches the result"() {
-        def l = tmpDir.file("l")
+    def "snapshots a directory containing a dangling symbolic link and caches the result"() {
+        def d = tmpDir.createDir('d')
+        def l = d.file("l")
         l.createLink('m')
 
         expect:
-        def snapshot = snapshotter.snapshotAll(l)
-        snapshotter.snapshotAll(l).is(snapshot)
+        def snapshot = snapshotter.snapshotAll(d)
+        snapshotter.snapshotAll(d).is(snapshot)
 
         fileSystemMirror.beforeTaskOutputChanged()
         l.delete()
         l.createLink('m-alt')
-
 
         def snapshot2 = snapshotter.snapshotAll(l)
         hash(snapshot) != hash(snapshot2)
