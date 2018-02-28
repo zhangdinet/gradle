@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 package org.gradle.api.internal.file.collections
 
-class ListBackedFileSetTest extends AbstractSetBackedFileSetTest {
+import spock.lang.Specification
 
-    @Override
-    AbstractSetBackedFileSet unit(File... files) {
-        return new ListBackedFileSet(files)
+abstract class AbstractSetBackedFileSetTest extends Specification {
+    abstract AbstractSetBackedFileSet unit(File... files)
+
+    void hasUsefulDisplayName() {
+        def testFile = new File('test-file')
+        def testFile2 = new File('test-file2')
+
+        expect:
+        unit().displayName == "empty file collection"
+        unit(testFile).displayName == "file '$testFile'"
+        unit(testFile, testFile2).displayName == "files '$testFile', '$testFile2'"
     }
 
-    def "can add to files collection"() {
-        given:
+    void containsSpecifiedFiles() {
         def testFile = new File('test-file')
-        def fileSet = unit()
 
-        when:
-        fileSet.files.add(testFile)
-
-        then:
-        fileSet.files.size() == 1
-        fileSet.files.contains(testFile)
+        expect:
+        unit(testFile).files == [testFile] as Set
     }
 }

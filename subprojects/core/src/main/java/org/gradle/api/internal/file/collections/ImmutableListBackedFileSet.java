@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 package org.gradle.api.internal.file.collections;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 
 /**
- * Adapts a java util collection into a file set.
+ * Adapts a java util collection into an immutable file set.
  */
-public class ListBackedFileSet extends AbstractSetBackedFileSet {
-    public ListBackedFileSet(File... files) {
+public class ImmutableListBackedFileSet extends AbstractSetBackedFileSet {
+    public ImmutableListBackedFileSet(File... files) {
         this(Arrays.asList(files));
     }
 
-    public ListBackedFileSet(Collection<File> files) {
-        super(new LinkedHashSet<File>(files));
+    public ImmutableListBackedFileSet(Collection<File> files) {
+        super(ImmutableSet.copyOf(files));
     }
 }

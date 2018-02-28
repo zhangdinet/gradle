@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.api.internal.file.collections;
+package org.gradle.api.internal.file.collections
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+class ImmutableListBackedFileSetTest extends AbstractSetBackedFileSetTest {
 
-/**
- * Adapts a java util collection into a file set.
- */
-public class ListBackedFileSet extends AbstractSetBackedFileSet {
-    public ListBackedFileSet(File... files) {
-        this(Arrays.asList(files));
+    @Override
+    AbstractSetBackedFileSet unit(File... files) {
+        return new ImmutableListBackedFileSet(files)
     }
 
-    public ListBackedFileSet(Collection<File> files) {
-        super(new LinkedHashSet<File>(files));
+    def "cannot add to files"() {
+        given:
+        def testFile = new File('test-file')
+        def fileSet = unit()
+
+        when:
+        fileSet.files.add(testFile)
+
+        then:
+        thrown(UnsupportedOperationException)
+        fileSet.files.size() == 0
     }
 }

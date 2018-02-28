@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,15 @@
 package org.gradle.api.internal.file.collections;
 
 import java.io.File;
-import java.util.Arrays;
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 
-/**
- * Adapts a java util collection into a file set.
- */
-public class ListBackedFileSet extends AbstractSetBackedFileSet {
-    public ListBackedFileSet(File... files) {
-        this(Arrays.asList(files));
+public class ImmutableFileCollection extends FileCollectionAdapter implements Serializable {
+    public ImmutableFileCollection(File... files) {
+        super(new ImmutableListBackedFileSet(files));
     }
 
-    public ListBackedFileSet(Collection<File> files) {
-        super(new LinkedHashSet<File>(files));
+    public ImmutableFileCollection(Collection<File> files) {
+        super(new ImmutableListBackedFileSet(files));
     }
 }
