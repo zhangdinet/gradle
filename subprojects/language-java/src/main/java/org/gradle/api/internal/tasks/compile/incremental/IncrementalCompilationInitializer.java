@@ -19,7 +19,7 @@ package org.gradle.api.internal.tasks.compile.incremental;
 import com.google.common.collect.Lists;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.file.FileOperations;
-import org.gradle.api.internal.file.collections.SimpleFileCollection;
+import org.gradle.api.internal.file.collections.ImmutableFileCollection;
 import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.internal.Factory;
@@ -37,7 +37,7 @@ class IncrementalCompilationInitializer {
 
     public void initializeCompilation(JavaCompileSpec spec, Collection<String> staleClasses) {
         if (staleClasses.isEmpty()) {
-            spec.setSource(new SimpleFileCollection());
+            spec.setSource(new ImmutableFileCollection());
             return;
         }
 

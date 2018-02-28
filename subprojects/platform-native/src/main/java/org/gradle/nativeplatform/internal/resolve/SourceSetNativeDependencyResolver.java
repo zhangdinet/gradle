@@ -20,7 +20,7 @@ import org.gradle.api.Buildable;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.collections.MinimalFileSet;
-import org.gradle.api.internal.file.collections.SimpleFileCollection;
+import org.gradle.api.internal.file.collections.ImmutableFileCollection;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.language.base.LanguageSourceSet;
 import org.gradle.language.nativeplatform.HeaderExportingSourceSet;
@@ -73,7 +73,7 @@ public class SourceSetNativeDependencyResolver implements NativeDependencyResolv
         }
 
         private FileCollection empty() {
-            return new SimpleFileCollection();
+            return new ImmutableFileCollection();
         }
     }
 

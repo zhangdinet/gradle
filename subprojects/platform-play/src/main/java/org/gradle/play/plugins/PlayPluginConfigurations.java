@@ -24,7 +24,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileCollectionInternal;
 import org.gradle.api.internal.file.collections.LazilyInitializedFileCollection;
-import org.gradle.api.internal.file.collections.SimpleFileCollection;
+import org.gradle.api.internal.file.collections.ImmutableFileCollection;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 
 import java.io.File;
@@ -132,7 +132,7 @@ public class PlayPluginConfigurations {
                     files.add(artifact.getFile());
                 }
             }
-            return new SimpleFileCollection(files.build());
+            return new ImmutableFileCollection(files.build());
         }
 
         @Override

@@ -17,7 +17,7 @@ package org.gradle.api.tasks.javadoc
 
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.internal.ConventionTask
-import org.gradle.api.internal.file.collections.SimpleFileCollection
+import org.gradle.api.internal.file.collections.ImmutableFileCollection
 import org.gradle.api.tasks.AbstractConventionTaskTest
 import org.gradle.util.WrapUtil
 
@@ -90,7 +90,7 @@ public class GroovydocTest extends AbstractConventionTaskTest {
 
     def "groovy classpath must not be empty"() {
         when:
-        groovydoc.setGroovyClasspath(new SimpleFileCollection())
+        groovydoc.setGroovyClasspath(new ImmutableFileCollection())
         groovydoc.generate()
 
         then:

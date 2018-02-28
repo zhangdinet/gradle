@@ -22,7 +22,7 @@ import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
-import org.gradle.api.internal.file.collections.SimpleFileCollection;
+import org.gradle.api.internal.file.collections.ImmutableFileCollection;
 import org.gradle.internal.ErroringAction;
 import org.gradle.internal.IoActions;
 import org.gradle.internal.os.OperatingSystem;
@@ -143,7 +143,7 @@ public class JavaInstallationProbe {
         exec.executable(javaExe(jdkPath, "java"));
         File workingDir = Files.createTempDir();
         exec.setWorkingDir(workingDir);
-        exec.setClasspath(new SimpleFileCollection(workingDir));
+        exec.setClasspath(new ImmutableFileCollection(workingDir));
         try {
             writeProbe(workingDir);
             exec.setMain(JavaProbe.CLASSNAME);
