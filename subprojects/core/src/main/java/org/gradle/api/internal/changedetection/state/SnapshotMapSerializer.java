@@ -71,7 +71,7 @@ public class SnapshotMapSerializer extends AbstractSerializer<Map<String, Normal
                 snapshot = new FileHashSnapshot(hashCodeSerializer.read(decoder));
                 break;
             case SYMBOLIC_LINK_SNAPSHOT:
-                snapshot = new SymbolicLinkHashSnapshot(hashCodeSerializer.read(decoder));
+                snapshot = new BrokenSymbolicLinkHashSnapshot(hashCodeSerializer.read(decoder));
                 break;
             default:
                 throw new RuntimeException("Unable to read serialized file snapshot. Unrecognized value found in the data stream.");
@@ -128,7 +128,7 @@ public class SnapshotMapSerializer extends AbstractSerializer<Map<String, Normal
         } else if (snapshot instanceof FileHashSnapshot) {
             encoder.writeByte(REGULAR_FILE_SNAPSHOT);
             hashCodeSerializer.write(encoder, snapshot.getContentMd5());
-        } else if (snapshot instanceof SymbolicLinkHashSnapshot) {
+        } else if (snapshot instanceof BrokenSymbolicLinkHashSnapshot) {
             encoder.writeByte(SYMBOLIC_LINK_SNAPSHOT);
             hashCodeSerializer.write(encoder, snapshot.getContentMd5());
         } else {

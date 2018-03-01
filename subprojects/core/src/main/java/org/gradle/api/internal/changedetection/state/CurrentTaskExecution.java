@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
 import org.gradle.api.NonNullApi;
+import org.gradle.api.internal.BrokenSymbolicLinkInputs;
 import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.api.internal.tasks.OriginTaskExecutionMetadata;
 
@@ -34,6 +35,7 @@ public class CurrentTaskExecution extends AbstractTaskExecution {
     private final ImmutableSortedMap<String, FileCollectionSnapshot> inputFilesSnapshot;
     private FileCollectionSnapshot discoveredInputFilesSnapshot;
     private final OverlappingOutputs detectedOverlappingOutputs;
+    private final BrokenSymbolicLinkInputs brokenSymbolicLinkInputs;
     private Boolean successful;
     private OriginTaskExecutionMetadata originExecutionMetadata;
 
@@ -46,14 +48,16 @@ public class CurrentTaskExecution extends AbstractTaskExecution {
         ImmutableSortedMap<String, FileCollectionSnapshot> inputFilesSnapshot,
         FileCollectionSnapshot discoveredInputFilesSnapshot,
         ImmutableSortedMap<String, FileCollectionSnapshot> outputFilesSnapshot,
-        @Nullable OverlappingOutputs detectedOverlappingOutputs
-    ) {
+        @Nullable OverlappingOutputs detectedOverlappingOutputs,
+        @Nullable BrokenSymbolicLinkInputs brokenSymbolicLinkInputs
+        ) {
         super(taskImplementation, taskActionImplementations, inputProperties, outputPropertyNames);
         this.declaredOutputFilePaths = declaredOutputFilePaths;
         this.outputFilesSnapshot = outputFilesSnapshot;
         this.inputFilesSnapshot = inputFilesSnapshot;
         this.discoveredInputFilesSnapshot = discoveredInputFilesSnapshot;
         this.detectedOverlappingOutputs = detectedOverlappingOutputs;
+        this.brokenSymbolicLinkInputs = brokenSymbolicLinkInputs;
     }
 
     /**
@@ -101,6 +105,11 @@ public class CurrentTaskExecution extends AbstractTaskExecution {
     @Nullable
     public OverlappingOutputs getDetectedOverlappingOutputs() {
         return detectedOverlappingOutputs;
+    }
+
+    @Nullable
+    public BrokenSymbolicLinkInputs getBrokenSymbolicLinkInputs() {
+        return brokenSymbolicLinkInputs;
     }
 
     public HistoricalTaskExecution archive() {

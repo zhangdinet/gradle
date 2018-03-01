@@ -20,5 +20,5 @@ public enum FileType {
     RegularFile,
     Directory,
     Missing,
-    SymbolicLink
+    BrokenSymbolicLink
 }

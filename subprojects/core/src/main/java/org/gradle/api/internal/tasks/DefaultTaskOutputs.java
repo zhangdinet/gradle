@@ -22,6 +22,7 @@ import org.gradle.api.Describable;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.BrokenSymbolicLinkInputs;
 import org.gradle.api.internal.FilePropertyContainer;
 import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.api.internal.TaskExecutionHistory;
@@ -122,6 +123,12 @@ public class DefaultTaskOutputs implements TaskOutputsInternal {
                     relativePath, overlappingOutputs.getPropertyName()));
         }
 
+        BrokenSymbolicLinkInputs brokenSymbolicLinkInputs = getBrokenSymbolicLinkInputs();
+        if (brokenSymbolicLinkInputs != null) {
+            String relativePath = task.getProject().relativePath(brokenSymbolicLinkInputs.getBrokenSymbolicLinkPath());
+            return DefaultTaskOutputCachingState.disabled(TaskOutputCachingDisabledReasonCategory.BROKEN_SYMBOLIC_LINK_INPUTS, String.format("Gradle found a broken symbolic link '%s' (input property '%s'). Task output caching cannot guarantee correctness.", relativePath, brokenSymbolicLinkInputs.getPropertyName()));
+        }
+
         for (TaskPropertySpec spec : taskProperties.getOutputFileProperties()) {
             if (spec instanceof NonCacheableTaskOutputPropertySpec) {
                 return DefaultTaskOutputCachingState.disabled(
@@ -156,6 +163,11 @@ public class DefaultTaskOutputs implements TaskOutputsInternal {
     @Nullable
     private OverlappingOutputs getOverlappingOutputs() {
         return history != null ? history.getOverlappingOutputs() : null;
+    }
+
+    @Nullable
+    private BrokenSymbolicLinkInputs getBrokenSymbolicLinkInputs() {
+        return history != null ? history.getBrokenSymbolicLinkInputs() : null;
     }
 
     @Override

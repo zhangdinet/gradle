@@ -98,7 +98,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
     }
 
     @Requires(TestPrecondition.SYMLINKS)
-    def "fetches details of a directory hierarchy containing a dangling symbolic link and caches the result"() {
+    def "fetches details of a directory hierarchy containing a broken symbolic link and caches the result"() {
         def d = tmpDir.createDir("d")
         d.createFile("f1")
         d.createFile("d1/f2")
@@ -146,7 +146,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
     }
 
     @Requires(TestPrecondition.SYMLINKS)
-    def "fetches details of a directory tree containing dangling symbolic link with no patterns and caches the result"() {
+    def "fetches details of a directory tree containing broken symbolic link with no patterns and caches the result"() {
         def d = tmpDir.createDir("d")
         d.createFile("f1")
         d.createFile("d1/f2")
@@ -196,7 +196,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
     }
 
     @Requires(TestPrecondition.SYMLINKS)
-    def "fetches details of a directory tree containing dangling symbolic links with patterns patterns and does not cache the result"() {
+    def "fetches details of a directory tree containing broken symbolic links with patterns patterns and does not cache the result"() {
         def d = tmpDir.createDir("d")
         d.createFile("f1")
         d.createFile("d1/f2")
@@ -253,7 +253,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
     }
 
     @Requires(TestPrecondition.SYMLINKS)
-    def "reuses cached unfiltered trees containing a dangling symbolic link when looking for details of a filtered tree"() {
+    def "reuses cached unfiltered trees containing a broken symbolic link when looking for details of a filtered tree"() {
         given: "An existing snapshot"
         def d = tmpDir.createDir("d")
         d.createFile("f1")
@@ -293,7 +293,7 @@ class DefaultFileSystemSnapshotterTest extends Specification {
     }
 
     @Requires(TestPrecondition.SYMLINKS)
-    def "snapshots a directory containing a dangling symbolic link and caches the result"() {
+    def "snapshots a directory containing a broken symbolic link and caches the result"() {
         def d = tmpDir.createDir('d')
         def l = d.file("l")
         l.createLink('m')

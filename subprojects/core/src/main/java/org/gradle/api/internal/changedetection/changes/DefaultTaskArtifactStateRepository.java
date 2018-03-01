@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import org.gradle.api.NonNullApi;
+import org.gradle.api.internal.BrokenSymbolicLinkInputs;
 import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.api.internal.TaskExecutionHistory;
 import org.gradle.api.internal.TaskInternal;
@@ -213,6 +214,12 @@ public class DefaultTaskArtifactStateRepository implements TaskArtifactStateRepo
                 }
             }
             return states;
+        }
+
+        @Nullable
+        @Override
+        public BrokenSymbolicLinkInputs getBrokenSymbolicLinkInputs() {
+            return history.getCurrentExecution().getBrokenSymbolicLinkInputs();
         }
     }
 }

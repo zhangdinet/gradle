@@ -44,4 +44,9 @@ public interface TaskExecutionHistory {
     @Nullable
     OriginTaskExecutionMetadata getOriginExecutionMetadata();
 
+    /**
+     * Returns if broken symbolic link inputs were detected
+     */
+    @Nullable
+    BrokenSymbolicLinkInputs getBrokenSymbolicLinkInputs();
 }

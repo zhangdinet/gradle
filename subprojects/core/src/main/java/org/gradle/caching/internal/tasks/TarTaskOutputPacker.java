@@ -194,6 +194,8 @@ public class TarTaskOutputPacker implements TaskOutputPacker {
                     break;
                 case Missing:
                     throw new IllegalStateException("File should not be missing: " + file);
+                case BrokenSymbolicLink:
+                    throw new IllegalStateException("Symbolic link is broken: " + file);
                 default:
                     throw new AssertionError();
             }

@@ -26,6 +26,7 @@ import com.google.common.collect.Maps;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Task;
 import org.gradle.api.UncheckedIOException;
+import org.gradle.api.internal.BrokenSymbolicLinkInputs;
 import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.cache.StringInterner;
@@ -167,6 +168,8 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
 
         OverlappingOutputs overlappingOutputs = detectOverlappingOutputs(outputFiles, previousExecution);
 
+        BrokenSymbolicLinkInputs brokenSymbolicLinkInputs = BrokenSymbolicLinkInputs.detect(inputFiles);
+
         return new CurrentTaskExecution(
             taskImplementation,
             taskActionImplementations,
@@ -176,7 +179,8 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
             inputFiles,
             discoveredInputs,
             outputFiles,
-            overlappingOutputs
+            overlappingOutputs,
+            brokenSymbolicLinkInputs
         );
     }
 

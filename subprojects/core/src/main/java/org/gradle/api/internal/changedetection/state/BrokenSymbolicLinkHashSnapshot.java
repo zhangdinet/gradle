@@ -18,18 +18,21 @@ package org.gradle.api.internal.changedetection.state;
 
 import org.gradle.internal.file.FileType;
 import org.gradle.internal.hash.HashCode;
+import org.gradle.internal.hash.Hashing;
 
-public class SymbolicLinkHashSnapshot extends AbstractFileContentSnapshot {
-    public SymbolicLinkHashSnapshot(HashCode hash) {
+public class BrokenSymbolicLinkHashSnapshot extends AbstractFileContentSnapshot {
+    static final HashCode SIGNATURE = Hashing.md5().hashString(BrokenSymbolicLinkSnapshot.class.getName());
+
+    public BrokenSymbolicLinkHashSnapshot(HashCode hash) {
         this(hash, 0L);
     }
 
-    public SymbolicLinkHashSnapshot(HashCode hash, long lastModified) {
+    public BrokenSymbolicLinkHashSnapshot(HashCode hash, long lastModified) {
         super(hash, lastModified);
     }
 
     @Override
     public FileType getType() {
-        return FileType.SymbolicLink;
+        return FileType.BrokenSymbolicLink;
     }
 }

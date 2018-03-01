@@ -18,25 +18,27 @@ package org.gradle.api.internal.changedetection.state
 
 import org.gradle.test.fixtures.file.TestFile
 
-import java.nio.file.Files
-
-class OutputDirectoryContainingDanglingSymbolicLinkUpToDateIntegrationTest extends AbstractSymbolicLinkUpToDateIntegrationTest {
+class InputDirectoryContainingDanglingBrokenSymbolicLinkUpToDateIntegrationTest extends AbstractBrokenSymbolicLinkUpToDateIntegrationTest {
     @Override
     void makeScenarioProject() {
         buildFile << """
             task checkCreated {
+                inputs.dir file('inputs')
                 outputs.dir file('outputs')
                 doLast {
-                    ${Files.canonicalName}.deleteIfExists(new File('${symbolicLinkUnderTest.absolutePath}').toPath())
-                    ${Files.canonicalName}.createSymbolicLink(new File('${symbolicLinkUnderTest.absolutePath}').toPath(), new File('${targetFile.absolutePath}').toPath())
+                    file('outputs').mkdir()
+                    file('$outputFileToClean').createNewFile()
                 }
             }
         """
+
+        testDirectory.createDir('inputs').mkdirs()
+        symbolicLinkUnderTest.createLink(relativeTarget)
     }
 
     @Override
     TestFile getSymbolicLinkUnderTest() {
-        return file('outputs/sym-link')
+        return file('inputs/sym-link')
     }
 
     @Override
@@ -47,5 +49,15 @@ class OutputDirectoryContainingDanglingSymbolicLinkUpToDateIntegrationTest exten
     @Override
     TestFile getAlternateTargetFile() {
         return file('some-other-missing-file-system-element')
+    }
+
+    @Override
+    TestFile getOutputFileToClean() {
+        return file('outputs/output.txt')
+    }
+
+    @Override
+    String getCachingDisabledMessage() {
+        return "Caching disabled for task ':checkCreated': Gradle found a broken symbolic link 'inputs/sym-link' (input property '\$1'). Task output caching cannot guarantee correctness."
     }
 }

@@ -25,16 +25,10 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 
 @Requires(TestPrecondition.SYMLINKS)
-abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractIntegrationSpec {
-    def "can handle a dangling symbolic link"() {
+abstract class AbstractBrokenSymbolicLinkUpToDateIntegrationTest extends AbstractIntegrationSpec {
+    def "can handle a broken symbolic link"() {
         given:
-        buildFile << """
-            task clean {
-                doLast {
-                    file('${symbolicLinkUnderTest.absolutePath}').delete()
-                }
-            }
-        """
+        createCleanTask()
         makeScenarioProject()
 
         expect:
@@ -50,7 +44,7 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         result.assertTaskSkipped(":checkCreated")
     }
 
-    def "can detect changes to dangling symbolic link target"() {
+    def "can detect changes to broken symbolic link target"() {
         given:
         makeScenarioProject()
         makeTaskUpToDate('checkCreated')
@@ -61,7 +55,7 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         assertTaskIsOutOfDate("checkCreated")
     }
 
-    def "can detect changes to dangling symbolic link name"() {
+    def "can detect changes to broken symbolic link name"() {
         given:
         makeScenarioProject()
         makeTaskUpToDate('checkCreated')
@@ -72,7 +66,7 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         assertTaskIsOutOfDate("checkCreated")
     }
 
-    def "can detect new file completing a dangling symbolic link"() {
+    def "can detect new file completing a broken symbolic link"() {
         given:
         makeScenarioProject()
         makeTaskUpToDate('checkCreated')
@@ -83,7 +77,7 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         assertTaskIsOutOfDate("checkCreated")
     }
 
-    def "can detect new empty directory completing a dangling symbolic link"() {
+    def "can detect new empty directory completing a broken symbolic link"() {
         given:
         makeScenarioProject()
         makeTaskUpToDate('checkCreated')
@@ -123,7 +117,35 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
         assertTaskIsOutOfDate("checkCreated")
     }
 
+    def "disable caching if broken symbolic link is found"() {
+        given:
+        makeScenarioProject()
+        createCleanTask()
+        makeTaskCacheable('checkCreated')
+
+        expect:
+        executer.withStackTraceChecksDisabled()
+        withBuildCache().succeeds('checkCreated')
+        executedAndNotSkipped(':checkCreated')
+
+        executer.withArgument("-i").withStackTraceChecksDisabled()
+        withBuildCache().succeeds('clean', 'checkCreated')
+        executedAndNotSkipped(':checkCreated')
+
+        outputContains(cachingDisabledMessage)
+    }
+
     abstract void makeScenarioProject()
+
+    void createCleanTask() {
+        buildFile << """
+            task clean {
+                doLast {
+                    file('${outputFileToClean.absolutePath}').delete()
+                }
+            }
+        """
+    }
 
     abstract TestFile getSymbolicLinkUnderTest()
 
@@ -134,6 +156,10 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
     }
 
     abstract TestFile getAlternateTargetFile()
+
+    abstract TestFile getOutputFileToClean()
+
+    abstract String getCachingDisabledMessage()
 
     String getRelativeAlternateTarget() {
         return symbolicLinkUnderTest.parentFile.toPath().relativize(alternateTargetFile.toPath()).toString()
@@ -150,6 +176,10 @@ abstract class AbstractSymbolicLinkUpToDateIntegrationTest extends AbstractInteg
 
         succeeds(taskName)
         result.assertTasksSkipped(":$taskName")
+    }
+
+    void makeTaskCacheable(String taskName) {
+        buildFile << "checkCreated.outputs.cacheIf { true }"
     }
 
     void changeSymbolicLinkTarget(TestFile symbolicLink, TestFile newTarget) {

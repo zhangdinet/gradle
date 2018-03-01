@@ -18,27 +18,25 @@ package org.gradle.api.internal.changedetection.state
 
 import org.gradle.test.fixtures.file.TestFile
 
-class InputDirectoryContainingDanglingSymbolicLinkUpToDateIntegrationTest extends AbstractSymbolicLinkUpToDateIntegrationTest {
+import java.nio.file.Files
+
+class OutputDirectoryContainingDanglingBrokenSymbolicLinkUpToDateIntegrationTest extends AbstractBrokenSymbolicLinkUpToDateIntegrationTest {
     @Override
     void makeScenarioProject() {
-        buildFile << '''
+        buildFile << """
             task checkCreated {
-                inputs.dir file('inputs')
-                outputs.file file("$buildDir/output.txt")
+                outputs.dir file('outputs')
                 doLast {
-                    buildDir.mkdir()
-                    file("$buildDir/output.txt").createNewFile()
+                    ${Files.canonicalName}.deleteIfExists(new File('${symbolicLinkUnderTest.absolutePath}').toPath())
+                    ${Files.canonicalName}.createSymbolicLink(new File('${symbolicLinkUnderTest.absolutePath}').toPath(), new File('${targetFile.absolutePath}').toPath())
                 }
             }
-        '''
-
-        testDirectory.createDir('inputs').mkdirs()
-        symbolicLinkUnderTest.createLink(relativeTarget)
+        """
     }
 
     @Override
     TestFile getSymbolicLinkUnderTest() {
-        return file('inputs/sym-link')
+        return file('outputs/sym-link')
     }
 
     @Override
@@ -49,5 +47,15 @@ class InputDirectoryContainingDanglingSymbolicLinkUpToDateIntegrationTest extend
     @Override
     TestFile getAlternateTargetFile() {
         return file('some-other-missing-file-system-element')
+    }
+
+    @Override
+    TestFile getOutputFileToClean() {
+        return symbolicLinkUnderTest
+    }
+
+    @Override
+    String getCachingDisabledMessage() {
+        return "Could not pack property '\$1': Symbolic link is broken: ${symbolicLinkUnderTest.absolutePath}"
     }
 }

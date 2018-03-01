@@ -20,13 +20,13 @@ import org.gradle.api.file.RelativePath;
 import org.gradle.internal.file.FileType;
 import org.gradle.internal.hash.HashCode;
 
-public class SymbolicLinkSnapshot implements FileSnapshot {
+public class BrokenSymbolicLinkSnapshot implements FileSnapshot {
     private final String path;
     private final RelativePath relativePath;
     private final boolean root;
-    private final SymbolicLinkHashSnapshot content;
+    private final BrokenSymbolicLinkHashSnapshot content;
 
-    public SymbolicLinkSnapshot(String path, RelativePath relativePath, boolean root, SymbolicLinkHashSnapshot content) {
+    public BrokenSymbolicLinkSnapshot(String path, RelativePath relativePath, boolean root, BrokenSymbolicLinkHashSnapshot content) {
         this.path = path;
         this.relativePath = relativePath;
         this.root = root;
@@ -65,13 +65,13 @@ public class SymbolicLinkSnapshot implements FileSnapshot {
 
     @Override
     public FileType getType() {
-        return FileType.SymbolicLink;
+        return FileType.BrokenSymbolicLink;
     }
 
     @Override
-    public SymbolicLinkSnapshot withContentHash(HashCode contentHash) {
+    public BrokenSymbolicLinkSnapshot withContentHash(HashCode contentHash) {
         if (!contentHash.equals(getContent().getContentMd5())) {
-            return new SymbolicLinkSnapshot(path, relativePath, root, new SymbolicLinkHashSnapshot(contentHash));
+            return new BrokenSymbolicLinkSnapshot(path, relativePath, root, new BrokenSymbolicLinkHashSnapshot(contentHash));
         }
         return this;
     }

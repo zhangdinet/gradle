@@ -17,6 +17,7 @@ package org.gradle.api.internal.tasks
 
 import com.google.common.collect.ImmutableSortedSet
 import org.gradle.api.GradleException
+import org.gradle.api.internal.BrokenSymbolicLinkInputs
 import org.gradle.api.internal.OverlappingOutputs
 import org.gradle.api.internal.TaskExecutionHistory
 import org.gradle.api.internal.TaskInputsInternal
@@ -399,9 +400,9 @@ class DefaultTaskOutputsTest extends Specification {
         cachingState.enabled
 
         when:
-        def taskHistory = Mock(TaskExecutionHistory)
-        outputs.setHistory(taskHistory)
-        taskHistory.getOverlappingOutputs() >> new OverlappingOutputs("someProperty", "path/to/outputFile")
+        def taskHistoryWithOverlappingOutputs = Mock(TaskExecutionHistory)
+        outputs.setHistory(taskHistoryWithOverlappingOutputs)
+        taskHistoryWithOverlappingOutputs.getOverlappingOutputs() >> new OverlappingOutputs("someProperty", "path/to/outputFile")
         cachingState = outputs.getCachingState(taskPropertiesWithOutput)
         then:
         project.relativePath(_) >> 'relative/path/to/outputFile'
@@ -427,6 +428,17 @@ class DefaultTaskOutputsTest extends Specification {
         !cachingState.enabled
         cachingState.disabledReason == "'on CI' not satisfied"
         cachingState.disabledReasonCategory == TaskOutputCachingDisabledReasonCategory.CACHE_IF_SPEC_NOT_SATISFIED
+
+        when:
+        def taskHistoryWithBrokenSymbolicLinkInputs = Mock(TaskExecutionHistory)
+        outputs.setHistory(taskHistoryWithBrokenSymbolicLinkInputs)
+        taskHistoryWithBrokenSymbolicLinkInputs.getBrokenSymbolicLinkInputs() >> new BrokenSymbolicLinkInputs("someProperty", "path/to/brokenSymbolicLink")
+        cachingState = outputs.getCachingState(taskPropertiesWithOutput)
+        then:
+        project.relativePath(_) >> 'relative/path/to/brokenSymbolicLink'
+        !cachingState.enabled
+        cachingState.disabledReason == "Gradle found a broken symbolic link 'relative/path/to/brokenSymbolicLink' (input property 'someProperty'). Task output caching cannot guarantee correctness."
+        cachingState.disabledReasonCategory == TaskOutputCachingDisabledReasonCategory.BROKEN_SYMBOLIC_LINK_INPUTS
     }
 
     def "report no reason if the task is cacheable"() {

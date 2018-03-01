@@ -253,14 +253,14 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
         return new FileHashSnapshot(hasher.hash(file, fileDetails), fileDetails.getLastModified());
     }
 
-    private static final HashCode SIGNATURE = Hashing.md5().hashString(SymbolicLinkSnapshot.class.getName());
-    private SymbolicLinkHashSnapshot symbolicLinkSnapshot(FileTreeElement symbolicLinkDetails) {
+
+    private BrokenSymbolicLinkHashSnapshot brokenSymbolicLinkSnapshot(FileTreeElement brokenSymbolicLinkDetails) {
         try {
             Hasher hasher = Hashing.md5().newHasher();
-            hasher.putHash(SIGNATURE);
-            hasher.putString(Files.readSymbolicLink(symbolicLinkDetails.getFile().toPath()).toFile().getPath());
-            hasher.putString(symbolicLinkDetails.getPath());
-            return new SymbolicLinkHashSnapshot(hasher.hash(), symbolicLinkDetails.getLastModified());
+            hasher.putHash(BrokenSymbolicLinkHashSnapshot.SIGNATURE);
+            hasher.putString(Files.readSymbolicLink(brokenSymbolicLinkDetails.getFile().toPath()).toFile().getPath());
+            hasher.putString(brokenSymbolicLinkDetails.getPath());
+            return new BrokenSymbolicLinkHashSnapshot(hasher.hash(), brokenSymbolicLinkDetails.getLastModified());
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
@@ -317,7 +317,7 @@ public class DefaultFileSystemSnapshotter implements FileSystemSnapshotter {
 
         @Override
         public void visitBrokenSymbolicLink(FileVisitDetails symDetails) {
-            fileTreeElements.add(new SymbolicLinkSnapshot(internPath(symDetails.getFile()), symDetails.getRelativePath(), false, symbolicLinkSnapshot(symDetails)));
+            fileTreeElements.add(new BrokenSymbolicLinkSnapshot(internPath(symDetails.getFile()), symDetails.getRelativePath(), false, brokenSymbolicLinkSnapshot(symDetails)));
         }
 
         @Override

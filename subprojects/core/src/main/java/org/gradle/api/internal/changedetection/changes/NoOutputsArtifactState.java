@@ -17,6 +17,7 @@
 package org.gradle.api.internal.changedetection.changes;
 
 import com.google.common.collect.ImmutableSortedMap;
+import org.gradle.api.internal.BrokenSymbolicLinkInputs;
 import org.gradle.api.internal.OverlappingOutputs;
 import org.gradle.api.internal.TaskExecutionHistory;
 import org.gradle.api.internal.changedetection.TaskArtifactState;
@@ -31,6 +32,7 @@ import org.gradle.caching.internal.tasks.TaskOutputCachingBuildCacheKey;
 import org.gradle.internal.id.UniqueId;
 import org.gradle.util.Path;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -152,4 +154,9 @@ class NoOutputsArtifactState implements TaskArtifactState, TaskExecutionHistory 
         return null;
     }
 
+    @Nullable
+    @Override
+    public BrokenSymbolicLinkInputs getBrokenSymbolicLinkInputs() {
+        return null;
+    }
 }
