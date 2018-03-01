@@ -134,7 +134,7 @@ public class DirectoryFileTree implements MinimalFileTree, PatternFilterableFile
             if (fileOrDirectory.isFile()) {
                 processSingleFile(fileOrDirectory, visitor, spec, stopFlag);
             } else {
-                walkDir(fileOrDirectory, path, visitor, spec, stopFlag, visitor.isReproducibleOrder());
+                walkDir(fileOrDirectory, path, visitor, spec, stopFlag);
             }
         } else {
             LOGGER.info("file or directory '{}', not found", fileOrDirectory);
@@ -149,9 +149,9 @@ public class DirectoryFileTree implements MinimalFileTree, PatternFilterableFile
         }
     }
 
-    private void walkDir(File file, RelativePath path, DirectoryElementVisitor visitor, Spec<FileTreeElement> spec, AtomicBoolean stopFlag, boolean isReproducibleOrder) {
+    private void walkDir(File file, RelativePath path, DirectoryElementVisitor visitor, Spec<FileTreeElement> spec, AtomicBoolean stopFlag) {
         DirectoryWalker directoryWalker;
-        if (isReproducibleOrder) {
+        if (visitor.isReproducibleOrder()) {
             directoryWalker = REPRODUCIBLE_DIRECTORY_WALKER;
         } else {
             directoryWalker = directoryWalkerFactory.create();

@@ -31,7 +31,7 @@ public class SnapshotMapSerializer extends AbstractSerializer<Map<String, Normal
     private static final byte DIR_SNAPSHOT = 1;
     private static final byte MISSING_FILE_SNAPSHOT = 2;
     private static final byte REGULAR_FILE_SNAPSHOT = 3;
-    private static final byte SYMBOLIC_LINK_SNAPSHOT = 4;
+    private static final byte BROKEN_SYMBOLIC_LINK_SNAPSHOT = 4;
 
     private static final byte NO_NORMALIZATION = 1;
     private static final byte DEFAULT_NORMALIZATION = 2;
@@ -70,7 +70,7 @@ public class SnapshotMapSerializer extends AbstractSerializer<Map<String, Normal
             case REGULAR_FILE_SNAPSHOT:
                 snapshot = new FileHashSnapshot(hashCodeSerializer.read(decoder));
                 break;
-            case SYMBOLIC_LINK_SNAPSHOT:
+            case BROKEN_SYMBOLIC_LINK_SNAPSHOT:
                 snapshot = new BrokenSymbolicLinkHashSnapshot(hashCodeSerializer.read(decoder));
                 break;
             default:
@@ -129,7 +129,7 @@ public class SnapshotMapSerializer extends AbstractSerializer<Map<String, Normal
             encoder.writeByte(REGULAR_FILE_SNAPSHOT);
             hashCodeSerializer.write(encoder, snapshot.getContentMd5());
         } else if (snapshot instanceof BrokenSymbolicLinkHashSnapshot) {
-            encoder.writeByte(SYMBOLIC_LINK_SNAPSHOT);
+            encoder.writeByte(BROKEN_SYMBOLIC_LINK_SNAPSHOT);
             hashCodeSerializer.write(encoder, snapshot.getContentMd5());
         } else {
             throw new AssertionError();

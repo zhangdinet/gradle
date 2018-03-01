@@ -157,15 +157,25 @@ public class TarFileTree implements MinimalFileTree, FileSystemMirroringFileTree
             // been extracted from the archive and we do not try to extract it again.
             // It's unsafe to keep the FileVisitDetails provided by TarFileTree directly
             // because we do not expect to visit the same paths again (after extracting everything).
-            visit(new FileVisitor() {
+            visit(new DirectoryElementVisitor() {
                 @Override
-                public void visitDir(FileVisitDetails dirDetails) {
+                public void visitDirectory(FileVisitDetails dirDetails) {
                     visitor.visitDirectory(new DefaultFileVisitDetails(dirDetails.getFile(), chmod, stat));
                 }
 
                 @Override
                 public void visitFile(FileVisitDetails fileDetails) {
                     visitor.visitFile(new DefaultFileVisitDetails(fileDetails.getFile(), chmod, stat));
+                }
+
+                @Override
+                public void visitBrokenSymbolicLink(FileVisitDetails symDetails) {
+                    visitor.visitBrokenSymbolicLink(new DefaultFileVisitDetails(symDetails.getFile(), chmod, stat));
+                }
+
+                @Override
+                public boolean isReproducibleOrder() {
+                    return visitor.isReproducibleOrder();
                 }
             });
         }
