@@ -55,6 +55,7 @@ public class CollectingMacroLookup implements MacroLookup {
 
     @Override
     public int getHash() {
+        collectAll();
         return hash;
     }
 
