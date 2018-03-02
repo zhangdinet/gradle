@@ -20,36 +20,66 @@ package org.gradle.api.internal.tasks.testing.detection
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.FileVisitDetails
 import org.gradle.api.file.FileVisitor
+import org.gradle.api.file.RelativePath
+import org.gradle.api.internal.file.DefaultFileVisitDetails
 import org.gradle.api.internal.tasks.testing.TestClassProcessor
-import org.junit.Test
 import spock.lang.Specification
 
-public class DefaultTestClassScannerTest extends Specification {
+class DefaultTestClassScannerTest extends Specification {
     private final TestFrameworkDetector detector = Mock()
     private final TestClassProcessor processor = Mock()
     private final FileTree files = Mock()
 
-    @Test
-    public void passesEachClassFileToTestClassDetector() {
-        DefaultTestClassScanner scanner = new DefaultTestClassScanner(files, detector, processor)
+    void passesEachClassFileToTestClassDetector() {
+        DefaultTestClassScanner scanner = new DefaultTestClassScanner(files, detector, processor, [] as Set)
 
         when:
         scanner.run()
 
+        then:
+        1 * files.visit(_) >> { args ->
+            FileVisitor visitor = args[0]
+            assert visitor
+            visitor.visitFile(mockFileVisitDetails('class1'))
+            visitor.visitFile(mockFileVisitDetails('class2'))
+        }
         then:
         1 * detector.startDetection(processor)
         then:
         1 * detector.processTestClass(new File("class1.class"))
         then:
         1 * detector.processTestClass(new File("class2.class"))
+
+        0 * _._
+    }
+
+    void previousFailedClassesPassedToTestClassDetectorFirst() {
+        DefaultTestClassScanner scanner = new DefaultTestClassScanner(files, detector, processor, ['Class3'] as Set)
+
+        when:
+        scanner.run()
+
         then:
         1 * files.visit(_) >> { args ->
             FileVisitor visitor = args[0]
             assert visitor
-            visitor.visitFile({new File('class1.class')} as FileVisitDetails)
-            visitor.visitFile({new File('class2.class')} as FileVisitDetails)
+            visitor.visitFile(mockFileVisitDetails('Class1'))
+            visitor.visitFile(mockFileVisitDetails('Class2'))
+            visitor.visitFile(mockFileVisitDetails('Class3'))
         }
+        then:
+        1 * detector.startDetection(processor)
+        then:
+        1 * detector.processTestClass(new File("Class3.class"))
+        then:
+        1 * detector.processTestClass(new File("Class1.class"))
+        then:
+        1 * detector.processTestClass(new File("Class2.class"))
 
         0 * _._
+    }
+
+    FileVisitDetails mockFileVisitDetails(String className) {
+        return new DefaultFileVisitDetails(new File("${className}.class"), new RelativePath(false, "${className}.class"), null, null, null)
     }
 }

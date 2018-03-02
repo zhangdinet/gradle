@@ -21,9 +21,11 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.internal.tasks.testing.DefaultTestClassRunInfo;
 import org.gradle.api.internal.tasks.testing.TestClassProcessor;
-import org.gradle.api.internal.tasks.testing.TestClassRunInfo;
+import org.gradle.internal.Pair;
 
 import java.io.File;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * The default test class scanner. Depending on the availability of a test framework detector,
@@ -33,52 +35,60 @@ public class DefaultTestClassScanner implements Runnable {
     private final FileTree candidateClassFiles;
     private final TestFrameworkDetector testFrameworkDetector;
     private final TestClassProcessor testClassProcessor;
+    private final Set<String> previousFailedTestClasses;
 
     public DefaultTestClassScanner(FileTree candidateClassFiles, TestFrameworkDetector testFrameworkDetector,
-                                   TestClassProcessor testClassProcessor) {
+                                   TestClassProcessor testClassProcessor, Set<String> previousFailedTestClasses) {
         this.candidateClassFiles = candidateClassFiles;
         this.testFrameworkDetector = testFrameworkDetector;
         this.testClassProcessor = testClassProcessor;
+        this.previousFailedTestClasses = previousFailedTestClasses;
     }
 
     @Override
     public void run() {
+        Set<Pair<String, File>> previousFailedTests = new LinkedHashSet<Pair<String, File>>();
+        Set<Pair<String, File>> otherTests = new LinkedHashSet<Pair<String, File>>();
+
+        getAllTestClasses(previousFailedTests, otherTests);
+
         if (testFrameworkDetector == null) {
-            filenameScan();
+            filenameScan(previousFailedTests);
+            filenameScan(otherTests);
         } else {
-            detectionScan();
+            testFrameworkDetector.startDetection(testClassProcessor);
+            detectionScan(previousFailedTests);
+            detectionScan(otherTests);
         }
     }
 
-    private void detectionScan() {
-        testFrameworkDetector.startDetection(testClassProcessor);
-        candidateClassFiles.visit(new ClassFileVisitor() {
-            public void visitClassFile(FileVisitDetails fileDetails) {
-                testFrameworkDetector.processTestClass(fileDetails.getFile());
+    private void getAllTestClasses(final Set<Pair<String, File>> previousFailedTests, final Set<Pair<String, File>> otherTests) {
+        candidateClassFiles.visit(new EmptyFileVisitor() {
+            @Override
+            public void visitFile(FileVisitDetails fileDetails) {
+                final File file = fileDetails.getFile();
+
+                if (file.getAbsolutePath().endsWith(".class")) {
+                    String className = fileDetails.getRelativePath().getPathString().replaceAll("\\.class", "").replace('/', '.');
+                    if (previousFailedTestClasses.contains(className)) {
+                        previousFailedTests.add(Pair.of(className, fileDetails.getFile()));
+                    } else {
+                        otherTests.add(Pair.of(className, fileDetails.getFile()));
+                    }
+                }
             }
         });
     }
 
-    private void filenameScan() {
-        candidateClassFiles.visit(new ClassFileVisitor() {
-            public void visitClassFile(FileVisitDetails fileDetails) {
-                String className = fileDetails.getRelativePath().getPathString().replaceAll("\\.class", "").replace('/', '.');
-                TestClassRunInfo testClass = new DefaultTestClassRunInfo(className);
-                testClassProcessor.processTestClass(testClass);
-            }
-        });
+    private void filenameScan(Set<Pair<String, File>> tests) {
+        for (Pair<String, File> test : tests) {
+            testClassProcessor.processTestClass(new DefaultTestClassRunInfo(test.getLeft()));
+        }
     }
 
-    private abstract class ClassFileVisitor extends EmptyFileVisitor {
-        @Override
-        public void visitFile(FileVisitDetails fileDetails) {
-            final File file = fileDetails.getFile();
-
-            if (file.getAbsolutePath().endsWith(".class")) {
-                visitClassFile(fileDetails);
-            }
+    private void detectionScan(Set<Pair<String, File>> tests) {
+        for (Pair<String, File> test : tests) {
+            testFrameworkDetector.processTestClass(test.getRight());
         }
-
-        public abstract void visitClassFile(FileVisitDetails fileDetails);
     }
 }

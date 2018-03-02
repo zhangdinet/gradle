@@ -98,9 +98,9 @@ public class DefaultTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             TestFrameworkDetector testFrameworkDetector = testFramework.getDetector();
             testFrameworkDetector.setTestClasses(testExecutionSpec.getTestClassesDirs().getFiles());
             testFrameworkDetector.setTestClasspath(classpath);
-            detector = new DefaultTestClassScanner(testClassFiles, testFrameworkDetector, processor);
+            detector = new DefaultTestClassScanner(testClassFiles, testFrameworkDetector, processor, testExecutionSpec.getPreviousFailedTestClasses());
         } else {
-            detector = new DefaultTestClassScanner(testClassFiles, null, processor);
+            detector = new DefaultTestClassScanner(testClassFiles, null, processor, testExecutionSpec.getPreviousFailedTestClasses());
         }
 
         final Object testTaskOperationId = buildOperationExecutor.getCurrentOperation().getParentId();
