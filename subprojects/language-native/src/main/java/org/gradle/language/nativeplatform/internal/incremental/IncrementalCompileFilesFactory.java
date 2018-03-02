@@ -113,7 +113,8 @@ public class IncrementalCompileFilesFactory {
         }
 
         private FileVisitResult visitFile(File file, FileSnapshot fileSnapshot, CollectingMacroLookup visibleMacros, Set<File> visited, boolean isSourceFile) {
-            FileDetails fileDetails = includeAnalysisCache.get(file);
+            int hash = visibleMacros.getHash();
+            FileDetails fileDetails = includeAnalysisCache.get(file, hash);
             if (fileDetails != null && fileDetails.results != null) {
                 // A file that we can safely reuse the result for
                 visibleMacros.append(fileDetails.results);
@@ -129,7 +130,6 @@ public class IncrementalCompileFilesFactory {
                 HashCode newHash = fileSnapshot.getContent().getContentMd5();
                 IncludeDirectives includeDirectives = sourceIncludesParser.parseIncludes(file);
                 fileDetails = new FileDetails(new IncludeFileState(newHash, file), includeDirectives);
-                includeAnalysisCache.put(file, fileDetails);
             }
 
             CollectingMacroLookup includedFileDirectives = new CollectingMacroLookup();
@@ -164,6 +164,10 @@ public class IncrementalCompileFilesFactory {
             if (result == IncludeFileResolutionResult.NoMacroIncludes) {
                 // No macro includes were seen in the include graph of this file, so the result can be reused if this file is seen again
                 fileDetails.results = visitResult;
+                includeAnalysisCache.put(file, fileDetails);
+            } else {
+                fileDetails.results = visitResult;
+                includeAnalysisCache.put(file, hash, fileDetails);
             }
             return visitResult;
         }
