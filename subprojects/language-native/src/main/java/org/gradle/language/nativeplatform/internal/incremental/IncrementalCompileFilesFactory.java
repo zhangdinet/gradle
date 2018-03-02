@@ -25,6 +25,7 @@ import org.gradle.internal.hash.HashCode;
 import org.gradle.language.nativeplatform.internal.Include;
 import org.gradle.language.nativeplatform.internal.IncludeDirectives;
 import org.gradle.language.nativeplatform.internal.IncludeType;
+import org.gradle.language.nativeplatform.internal.registry.NativeLanguageServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +47,14 @@ public class IncrementalCompileFilesFactory {
     private final SourceIncludesParser sourceIncludesParser;
     private final SourceIncludesResolver sourceIncludesResolver;
     private final FileSystemSnapshotter fileSystemSnapshotter;
+    private final NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache;
     private final boolean ignoreUnresolvedHeadersInDependencies;
 
-    public IncrementalCompileFilesFactory(SourceIncludesParser sourceIncludesParser, SourceIncludesResolver sourceIncludesResolver, FileSystemSnapshotter fileSystemSnapshotter) {
+    public IncrementalCompileFilesFactory(SourceIncludesParser sourceIncludesParser, SourceIncludesResolver sourceIncludesResolver, FileSystemSnapshotter fileSystemSnapshotter, NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache) {
         this.sourceIncludesParser = sourceIncludesParser;
         this.sourceIncludesResolver = sourceIncludesResolver;
         this.fileSystemSnapshotter = fileSystemSnapshotter;
+        this.includeAnalysisCache = includeAnalysisCache;
         this.ignoreUnresolvedHeadersInDependencies = Boolean.getBoolean(IGNORE_UNRESOLVED_HEADERS_IN_DEPENDENCIES_PROPERTY_NAME);
     }
 
@@ -65,7 +68,6 @@ public class IncrementalCompileFilesFactory {
         private final List<File> toRecompile = new ArrayList<File>();
         private final Set<File> existingHeaders = Sets.newHashSet();
         private final Map<File, IncludeDirectives> includeDirectivesMap = new HashMap<File, IncludeDirectives>();
-        private final Map<File, FileDetails> visitedFiles = new HashMap<File, FileDetails>();
         int traversalCount;
         private boolean hasUnresolvedHeaders;
 
@@ -111,7 +113,7 @@ public class IncrementalCompileFilesFactory {
         }
 
         private FileVisitResult visitFile(File file, FileSnapshot fileSnapshot, CollectingMacroLookup visibleMacros, Set<File> visited, boolean isSourceFile) {
-            FileDetails fileDetails = visitedFiles.get(file);
+            FileDetails fileDetails = includeAnalysisCache.get(file);
             if (fileDetails != null && fileDetails.results != null) {
                 // A file that we can safely reuse the result for
                 visibleMacros.append(fileDetails.results);
@@ -127,7 +129,7 @@ public class IncrementalCompileFilesFactory {
                 HashCode newHash = fileSnapshot.getContent().getContentMd5();
                 IncludeDirectives includeDirectives = sourceIncludesParser.parseIncludes(file);
                 fileDetails = new FileDetails(new IncludeFileState(newHash, file), includeDirectives);
-                visitedFiles.put(file, fileDetails);
+                includeAnalysisCache.put(file, fileDetails);
             }
 
             CollectingMacroLookup includedFileDirectives = new CollectingMacroLookup();
@@ -186,7 +188,7 @@ public class IncrementalCompileFilesFactory {
     /**
      * Details of a file that are independent of where the file appears in the file include graph.
      */
-    private static class FileDetails {
+    public static class FileDetails {
         final IncludeFileState state;
         final IncludeDirectives directives;
         // Non-null when the result of visiting this file can be reused

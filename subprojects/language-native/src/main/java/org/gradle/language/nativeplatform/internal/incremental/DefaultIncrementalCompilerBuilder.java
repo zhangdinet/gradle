@@ -28,6 +28,7 @@ import org.gradle.cache.PersistentStateCache;
 import org.gradle.internal.operations.BuildOperationExecutor;
 import org.gradle.language.base.internal.compile.Compiler;
 import org.gradle.language.nativeplatform.internal.incremental.sourceparser.CSourceParser;
+import org.gradle.language.nativeplatform.internal.registry.NativeLanguageServices;
 import org.gradle.nativeplatform.toolchain.Clang;
 import org.gradle.nativeplatform.toolchain.Gcc;
 import org.gradle.nativeplatform.toolchain.internal.NativeCompileSpec;
@@ -44,19 +45,21 @@ public class DefaultIncrementalCompilerBuilder implements IncrementalCompilerBui
     private final DirectoryFileTreeFactory directoryFileTreeFactory;
     private final TaskFileVarFactory fileVarFactory;
     private final BuildOperationExecutor buildOperationExecutor;
+    private final NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache;
 
-    public DefaultIncrementalCompilerBuilder(FileSystemSnapshotter fileSystemSnapshotter, CompilationStateCacheFactory compilationStateCacheFactory, CSourceParser sourceParser, DirectoryFileTreeFactory directoryFileTreeFactory, TaskFileVarFactory fileVarFactory, BuildOperationExecutor buildOperationExecutor) {
+    public DefaultIncrementalCompilerBuilder(FileSystemSnapshotter fileSystemSnapshotter, CompilationStateCacheFactory compilationStateCacheFactory, CSourceParser sourceParser, DirectoryFileTreeFactory directoryFileTreeFactory, TaskFileVarFactory fileVarFactory, BuildOperationExecutor buildOperationExecutor, NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache) {
         this.fileSystemSnapshotter = fileSystemSnapshotter;
         this.compilationStateCacheFactory = compilationStateCacheFactory;
         this.sourceParser = sourceParser;
         this.directoryFileTreeFactory = directoryFileTreeFactory;
         this.fileVarFactory = fileVarFactory;
         this.buildOperationExecutor = buildOperationExecutor;
+        this.includeAnalysisCache = includeAnalysisCache;
     }
 
     @Override
     public IncrementalCompiler newCompiler(TaskInternal task, FileCollection sourceFiles, FileCollection includeDirs) {
-        return new StateCollectingIncrementalCompiler(task, includeDirs, sourceFiles, fileSystemSnapshotter, compilationStateCacheFactory, sourceParser, directoryFileTreeFactory, fileVarFactory, buildOperationExecutor);
+        return new StateCollectingIncrementalCompiler(task, includeDirs, sourceFiles, fileSystemSnapshotter, compilationStateCacheFactory, sourceParser, directoryFileTreeFactory, fileVarFactory, buildOperationExecutor, includeAnalysisCache);
     }
 
     private static class StateCollectingIncrementalCompiler implements IncrementalCompiler, MinimalFileSet, LifecycleAwareTaskProperty {
@@ -65,6 +68,7 @@ public class DefaultIncrementalCompilerBuilder implements IncrementalCompilerBui
         private final CSourceParser sourceParser;
         private final DirectoryFileTreeFactory directoryFileTreeFactory;
         private final BuildOperationExecutor buildOperationExecutor;
+        private final NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache;
         private final TaskOutputsInternal taskOutputs;
         private final FileCollection includeDirs;
         private final String taskPath;
@@ -74,7 +78,7 @@ public class DefaultIncrementalCompilerBuilder implements IncrementalCompilerBui
         private IncrementalCompilation incrementalCompilation;
         private NativeToolChainInternal toolChain;
 
-        StateCollectingIncrementalCompiler(TaskInternal task, FileCollection includeDirs, FileCollection sourceFiles, FileSystemSnapshotter fileSystemSnapshotter, CompilationStateCacheFactory compilationStateCacheFactory, CSourceParser sourceParser, DirectoryFileTreeFactory directoryFileTreeFactory, TaskFileVarFactory fileVarFactory, BuildOperationExecutor buildOperationExecutor) {
+        StateCollectingIncrementalCompiler(TaskInternal task, FileCollection includeDirs, FileCollection sourceFiles, FileSystemSnapshotter fileSystemSnapshotter, CompilationStateCacheFactory compilationStateCacheFactory, CSourceParser sourceParser, DirectoryFileTreeFactory directoryFileTreeFactory, TaskFileVarFactory fileVarFactory, BuildOperationExecutor buildOperationExecutor, NativeLanguageServices.IncludeAnalysisFileDetailsCache includeAnalysisCache) {
             this.taskOutputs = task.getOutputs();
             this.taskPath = task.getPath();
             this.includeDirs = includeDirs;
@@ -84,6 +88,7 @@ public class DefaultIncrementalCompilerBuilder implements IncrementalCompilerBui
             this.sourceParser = sourceParser;
             this.directoryFileTreeFactory = directoryFileTreeFactory;
             this.buildOperationExecutor = buildOperationExecutor;
+            this.includeAnalysisCache = includeAnalysisCache;
             headerFilesCollection = fileVarFactory.newCalculatedInputFileCollection(task, this, sourceFiles, includeDirs);
         }
 
@@ -106,7 +111,7 @@ public class DefaultIncrementalCompilerBuilder implements IncrementalCompilerBui
             compileStateCache = compilationStateCacheFactory.create(taskPath);
             DefaultSourceIncludesParser sourceIncludesParser = new DefaultSourceIncludesParser(sourceParser, toolChain instanceof Clang || toolChain instanceof Gcc);
             DefaultSourceIncludesResolver dependencyParser = new DefaultSourceIncludesResolver(includeRoots, fileSystemSnapshotter);
-            IncrementalCompileFilesFactory incrementalCompileFilesFactory = new IncrementalCompileFilesFactory(sourceIncludesParser, dependencyParser, fileSystemSnapshotter);
+            IncrementalCompileFilesFactory incrementalCompileFilesFactory = new IncrementalCompileFilesFactory(sourceIncludesParser, dependencyParser, fileSystemSnapshotter, includeAnalysisCache);
             IncrementalCompileProcessor incrementalCompileProcessor = new IncrementalCompileProcessor(compileStateCache, incrementalCompileFilesFactory, buildOperationExecutor);
 
             incrementalCompilation = incrementalCompileProcessor.processSourceFiles(sourceFiles.getFiles());
