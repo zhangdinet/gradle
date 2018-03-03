@@ -22,6 +22,7 @@ if (!gradle.startParameter.systemPropertiesArgs.containsKey("disableScanPlugin")
 
             buildScan {
                 server = "https://e.grdev.net"
+                allowUntrustedServer = true
             }
         }
     }
